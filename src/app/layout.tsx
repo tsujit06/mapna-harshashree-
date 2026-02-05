@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
-import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
-import Script from "next/script";
+import { Shield } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,25 +17,61 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <Script
-          id="orchids-browser-logs"
-          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts/orchids-browser-logs.js"
-          strategy="afterInteractive"
-          data-orchids-project-id="69768ac8-e444-47b7-9daa-98484612ddcc"
-        />
         <ErrorReporter />
-        <Script
-          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"
-          strategy="afterInteractive"
-          data-target-origin="*"
-          data-message-type="ROUTE_CHANGE"
-          data-include-search-params="true"
-          data-only-in-iframe="true"
-          data-debug="true"
-          data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
-        />
-        {children}
-        <VisualEditsMessenger />
+        <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-black">
+          <div className="flex-1">
+            {children}
+          </div>
+          <footer className="py-10 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-black">
+            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-red-600 p-1.5 rounded-xl shadow-md shadow-red-600/20">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-zinc-900 dark:text-white">kavach</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    © 2026 kavach. Scan. Connect. Save lives.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-sm text-zinc-500 dark:text-zinc-400">
+                <Link href="/privacy" className="hover:text-red-600 dark:hover:text-red-500 transition-colors">
+                  Privacy
+                </Link>
+                <Link href="/security" className="hover:text-red-600 dark:hover:text-red-500 transition-colors">
+                  Security
+                </Link>
+                <Link href="/about" className="hover:text-red-600 dark:hover:text-red-500 transition-colors">
+                  About
+                </Link>
+                <a
+                  href="mailto:hello@kavach.app"
+                  className="hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                >
+                  hello@kavach.app
+                </a>
+                <a
+                  href="https://wa.me/919876543210"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                >
+                  WhatsApp: +91 98765 43210
+                </a>
+                <a
+                  href="https://instagram.com/kavach.app"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                >
+                  Instagram: @kavach.app
+                </a>
+              </div>
+            </div>
+          </footer>
+        </div>
       </body>
     </html>
   );

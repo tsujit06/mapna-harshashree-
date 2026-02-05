@@ -100,6 +100,21 @@ create table if not exists public.emergency_contacts (
 create index if not exists idx_emergency_contacts_profile_id
   on public.emergency_contacts (profile_id);
 
+-- Helper function: add a single emergency contact for the current user
+create or replace function public.add_emergency_contact(
+  p_name text,
+  p_relation text,
+  p_phone text
+)
+returns public.emergency_contacts
+language sql
+security invoker
+as $$
+  insert into public.emergency_contacts (profile_id, name, relation, phone)
+  values (auth.uid(), p_name, p_relation, p_phone)
+  returning *;
+$$;
+
 -- =========================================================
 -- NORMALIZED EMERGENCY / MEDICAL TABLES
 -- =========================================================

@@ -1,21 +1,22 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AdminQrToggleButton } from '@/components/AdminQrToggleButton';
 import { supabaseAdmin } from '../../../../backend/supabaseAdminClient';
+import { cookies } from 'next/headers';
 
 interface AdminDashboardPageProps {
-  searchParams?: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }
 
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const adminAuth = cookieStore.get('admin_auth');
 
   if (!adminAuth || adminAuth.value !== 'true') {
     redirect('/admin');
   }
 
-  const search = searchParams?.q?.trim() || '';
+  const { q } = await searchParams;
+  const search = q?.trim() || '';
 
   const [
     { count: totalUsers },
@@ -59,7 +60,17 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       .limit(20),
   ]);
 
-  const revenue = (paidNonFreeUsers || 0) * 10;
+  // Compute total revenue from activation payments (sum of amount_paise)
+  const { data: activationPayments } = await supabaseAdmin
+    .from('payments')
+    .select('amount_paise')
+    .eq('is_activation', true);
+
+  const revenue =
+    ((activationPayments || []) as { amount_paise: number | null }[]).reduce(
+      (sum, p) => sum + (p.amount_paise ?? 0),
+      0
+    ) / 100;
   const qrByProfileId = new Map<string, { token: string; is_active: boolean }>();
   (qrForRecent || []).forEach((qr: any) => {
     qrByProfileId.set(qr.profile_id, { token: qr.token, is_active: qr.is_active });
@@ -152,7 +163,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                         {user.is_paid ? 'Paid' : 'Unpaid'}
                       </span>
                       <span className="text-[10px] text-zinc-400 px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800">
-                        {user.is_free_customer ? 'FREE' : 'PAID ₹10'}
+                        {user.is_free_customer ? 'FREE' : 'PAID'}
                       </span>
                     </div>
                     <div className="text-[10px] text-zinc-500">

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabaseAdmin } from '../../../../../../backend/supabaseAdminClient';
+import { supabaseAdmin } from '../../../../../backend/supabaseAdminClient';
 
 function hashOtp(otp: string) {
   return crypto.createHash('sha256').update(otp).digest('hex');

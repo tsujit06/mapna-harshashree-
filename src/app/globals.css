@@ -45,6 +45,33 @@
 
 :root {
   --radius: 0.625rem;
+  /* Premium 3D & motion */
+  --perspective: 1000px;
+  --perspective-near: 600px;
+  --ease-smooth: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.35s;
+  --duration-slow: 0.5s;
+  --duration-page: 0.6s;
+  /* Deep 3D shadows */
+  --shadow-3d: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 12px 24px -12px rgb(0 0 0 / 0.15);
+  --shadow-3d-hover: 0 24px 48px -16px rgb(0 0 0 / 0.2), 0 12px 24px -12px rgb(0 0 0 / 0.12);
+  --shadow-3d-red: 0 12px 36px -8px rgb(185 28 28 / 0.4), 0 4px 12px -4px rgb(185 28 28 / 0.25);
+  --shadow-glow-red: 0 0 40px -8px rgb(220 38 38 / 0.35);
+  --shadow-float: 0 32px 64px -24px rgb(0 0 0 / 0.18);
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.1);
+  /* Gradients */
+  --gradient-hero: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(220, 38, 38, 0.12) 0%, transparent 55%);
+  --gradient-mesh: radial-gradient(at 40% 20%, rgba(220, 38, 38, 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(248, 113, 113, 0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(251, 146, 60, 0.04) 0px, transparent 50%);
+  --gradient-accent: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+  --gradient-text: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -116,7 +143,79 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Premium 3D & glass utilities */
+.perspective-3d {
+  perspective: var(--perspective);
+  transform-style: preserve-3d;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.transition-3d {
+  transition: transform var(--duration-normal) var(--ease-smooth),
+    box-shadow var(--duration-normal) var(--ease-smooth);
+}
+.shadow-3d {
+  box-shadow: var(--shadow-3d);
+}
+.shadow-3d-hover:hover {
+  box-shadow: var(--shadow-3d-hover);
+}
+.shadow-3d-red {
+  box-shadow: var(--shadow-3d-red);
+}
+.shadow-float {
+  box-shadow: var(--shadow-float);
+}
+.shadow-glow-red {
+  box-shadow: var(--shadow-glow-red);
+}
+/* Glass card */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+/* Gradient text */
+.gradient-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+/* 3D button (use with shadow-3d-red for primary) */
+.btn-3d {
+  transition: transform var(--duration-fast) var(--ease-smooth),
+    box-shadow var(--duration-normal) var(--ease-smooth);
+}
+.btn-3d:hover {
+  transform: translateY(-2px);
+}
+.btn-3d:active {
+  transform: translateY(0);
+}
+/* Hero gradient background */
+.bg-hero-gradient {
+  background: var(--gradient-hero);
+}
+.bg-mesh-gradient {
+  background: var(--gradient-mesh);
+}
+.dark .glass-card {
+  --glass-bg: rgba(24, 24, 27, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
 }

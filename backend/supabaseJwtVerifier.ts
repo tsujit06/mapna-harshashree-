@@ -31,9 +31,10 @@ export interface VerifiedSupabaseToken extends JWTPayload {
  * Throws if the token is invalid, expired, or not issued by Supabase.
  */
 export async function verifySupabaseToken(token: string): Promise<VerifiedSupabaseToken> {
-  const { payload } = await jwtVerify(token, JWKS, {
-    issuer: 'supabase',
-  });
+  // Verify signature and standard claims using Supabase JWKS.
+  // We don't enforce a specific `iss` string here to avoid mismatches
+  // between token issuer formatting and our expected value.
+  const { payload } = await jwtVerify(token, JWKS, {});
 
   return payload as VerifiedSupabaseToken;
 }

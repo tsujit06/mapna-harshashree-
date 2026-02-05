@@ -1,16 +1,16 @@
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { Phone, Shield, AlertTriangle, HeartPulse, Pill, Activity } from 'lucide-react';
-import { supabaseAdmin } from '../../../../../backend/supabaseAdminClient';
+import { supabaseAdmin } from '../../../../backend/supabaseAdminClient';
 
 interface EmergencyPageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export default async function EmergencyPage({ params }: EmergencyPageProps) {
-  const { token } = params;
+  const { token } = await params;
 
   // Basic rate limiting / brute-force slowdown
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -67,7 +67,7 @@ export default async function EmergencyPage({ params }: EmergencyPageProps) {
 
   // Log the scan for admin analytics
   try {
-    const h = headers();
+    const h = await headers();
     const ip = h.get('x-forwarded-for') || 'unknown';
     const userAgent = h.get('user-agent') || 'unknown';
 
@@ -101,7 +101,7 @@ export default async function EmergencyPage({ params }: EmergencyPageProps) {
             <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight">QRgency Emergency</h1>
+            <h1 className="text-lg font-bold tracking-tight">kavach Emergency</h1>
             <p className="text-xs text-red-300 uppercase tracking-[0.2em]">
               ACT FAST · STAY CALM
             </p>

@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -7,7 +8,14 @@ import AuthLayout from '@/components/AuthLayout';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
-export default function RegisterPage() {
+type PageProps = {
+  params?: Promise<Record<string, string | string[]>>;
+  searchParams?: Promise<Record<string, string | string[]>>;
+};
+
+export default function RegisterPage(props: PageProps) {
+  if (props.params) React.use(props.params);
+  if (props.searchParams) React.use(props.searchParams);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -21,13 +29,23 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
 
+    // Ensure +91 prefix for Indian mobiles
+    let normalizedMobile = mobile.trim();
+    // Strip all spaces
+    normalizedMobile = normalizedMobile.replace(/\s+/g, '');
+    if (!normalizedMobile.startsWith('+91')) {
+      // Remove leading 0 if present, then prepend +91
+      normalizedMobile = normalizedMobile.replace(/^0+/, '');
+      normalizedMobile = `+91${normalizedMobile}`;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-          mobile: mobile,
+          mobile: normalizedMobile,
         },
       },
     });
@@ -36,18 +54,7 @@ export default function RegisterPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      try {
-        // Kick off OTP verification flow for the provided mobile
-        await fetch('/api/auth/request-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mobile }),
-        });
-      } catch (e) {
-        // Non-fatal for registration; OTP can be requested again from dashboard
-        console.error('Failed to request OTP after registration', e);
-      }
-
+      // OTP verification temporarily disabled after registration
       router.push('/dashboard');
     }
   };

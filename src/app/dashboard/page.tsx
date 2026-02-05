@@ -1,11 +1,26 @@
 'use client';
 
+import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Shield, Plus, Phone, User, LogOut, Loader2, QrCode, Download, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import {
+  Shield,
+  Plus,
+  Phone,
+  User,
+  LogOut,
+  Loader2,
+  QrCode,
+  Download,
+  AlertTriangle,
+  CheckCircle2,
+  HeartPulse,
+} from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { PaymentModal } from '@/components/PaymentModal';
+import { motion } from 'framer-motion';
+import { Card3D } from '@/components/Card3D';
 
 interface Profile {
   id: string;
@@ -13,6 +28,7 @@ interface Profile {
   mobile: string;
   is_paid: boolean;
   mobile_verified: boolean;
+  date_of_birth?: string | null;
 }
 
 interface Contact {
@@ -22,7 +38,14 @@ interface Contact {
   phone: string;
 }
 
-export default function DashboardPage() {
+type PageProps = {
+  params?: Promise<Record<string, string | string[]>>;
+  searchParams?: Promise<Record<string, string | string[]>>;
+};
+
+export default function DashboardPage(props: PageProps) {
+  if (props.params) React.use(props.params);
+  if (props.searchParams) React.use(props.searchParams);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,11 +54,16 @@ export default function DashboardPage() {
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', relation: '', phone: '' });
   const [savingContact, setSavingContact] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [editingContact, setEditingContact] = useState({ name: '', relation: '', phone: '' });
+  const [savingContactEdit, setSavingContactEdit] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [otpRequested, setOtpRequested] = useState(false);
   const [otp, setOtp] = useState('');
   const [otpStatus, setOtpStatus] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
+
+  // Saved emergency profile values (used for summaries / scan)
   const [guardianPhone, setGuardianPhone] = useState('');
   const [bloodGroup, setBloodGroup] = useState('');
   const [allergies, setAllergies] = useState('');
@@ -45,9 +73,21 @@ export default function DashboardPage() {
   const [languageNote, setLanguageNote] = useState('');
   const [age, setAge] = useState('');
   const [emergencyInstruction, setEmergencyInstruction] = useState('');
+
+  // Form-only state: used to submit, not to display saved values
+  const [formGuardianPhone, setFormGuardianPhone] = useState('');
+  const [formBloodGroup, setFormBloodGroup] = useState('');
+  const [formAllergies, setFormAllergies] = useState('');
+  const [formMedicalConditions, setFormMedicalConditions] = useState('');
+  const [formMedications, setFormMedications] = useState('');
+  const [formOrganDonor, setFormOrganDonor] = useState(false);
+  const [formLanguageNote, setFormLanguageNote] = useState('');
+  const [formAge, setFormAge] = useState('');
+  const [formEmergencyInstruction, setFormEmergencyInstruction] = useState('');
   const [savingEmergencyProfile, setSavingEmergencyProfile] = useState(false);
   const [emergencyStatus, setEmergencyStatus] = useState<string | null>(null);
   const [emergencyError, setEmergencyError] = useState<string | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const qrRef = useRef<SVGSVGElement | null>(null);
   const router = useRouter();
 
@@ -56,23 +96,41 @@ export default function DashboardPage() {
   }, []);
 
   const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/login');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      setUserId(user.id);
+
+    // Fetch profile (including date_of_birth so we can derive age); use maybeSingle so new users without a row don't error
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, full_name, mobile, is_paid, mobile_verified, date_of_birth')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      setLoading(false);
       return;
     }
 
-    setUserId(user.id);
+    // Use profile row or fallback from auth user metadata so UI always has a profile when logged in
+    const effectiveProfile = profileData ?? {
+      id: user.id,
+      full_name: (user.user_metadata?.full_name as string) || 'User',
+      mobile: (user.user_metadata?.mobile as string) || '',
+      is_paid: false,
+      mobile_verified: false,
+      date_of_birth: null as string | null,
+    };
+    setProfile(effectiveProfile);
 
-    // Fetch profile
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('id, full_name, mobile, is_paid, mobile_verified')
-      .eq('id', user.id)
-      .single();
-
-    if (profileData) {
-      setProfile(profileData);
+    {
+      const profileData = effectiveProfile;
 
       // Fetch contacts
       const { data: contactsData } = await supabase
@@ -82,12 +140,17 @@ export default function DashboardPage() {
 
       setContacts(contactsData || []);
 
-      // Fetch or generate QR token
-      const { data: qrData } = await supabase
+      // Fetch or generate QR token (tolerant of duplicate rows)
+      const { data: qrData, error: qrError } = await supabase
         .from('qr_codes')
         .select('token')
         .eq('profile_id', user.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
+
+      if (qrError && qrError.code !== 'PGRST116') {
+        console.error('Error fetching QR code:', qrError);
+      }
 
       if (qrData) {
         setQrToken(qrData.token);
@@ -119,25 +182,73 @@ export default function DashboardPage() {
         ]);
 
       if (emergencyProfile) {
-        setGuardianPhone(emergencyProfile.guardian_phone || '');
-        setBloodGroup(emergencyProfile.blood_group || '');
-        setLanguageNote(emergencyProfile.language_note || '');
-        setAge(emergencyProfile.age ? String(emergencyProfile.age) : '');
-        setEmergencyInstruction(emergencyProfile.emergency_instruction || emergencyInstruction);
-        setOrganDonor(emergencyProfile.organ_donor ?? false);
+        const guardian = emergencyProfile.guardian_phone || '';
+        const blood = emergencyProfile.blood_group || '';
+        const lang = emergencyProfile.language_note || '';
+
+        // Prefer age derived from date_of_birth on profile, fall back to stored age
+        let ageVal = '';
+        if (profileData.date_of_birth) {
+          const dob = new Date(profileData.date_of_birth);
+          if (!Number.isNaN(dob.getTime())) {
+            const today = new Date();
+            let years = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+              years--;
+            }
+            ageVal = String(years);
+          }
+        }
+        if (!ageVal && emergencyProfile.age) {
+          ageVal = String(emergencyProfile.age);
+        }
+        const instruction = emergencyProfile.emergency_instruction || emergencyInstruction;
+        const donor = emergencyProfile.organ_donor ?? false;
+
+        // Saved snapshot (for summaries / scan)
+        setGuardianPhone(guardian);
+        setBloodGroup(blood);
+        setLanguageNote(lang);
+        setAge(ageVal);
+        setEmergencyInstruction(instruction);
+        setOrganDonor(donor);
+
+        // Prefill form so user can edit later
+        setFormGuardianPhone(guardian);
+        setFormBloodGroup(blood);
+        setFormLanguageNote(lang);
+        setFormAge(ageVal);
+        setFormEmergencyInstruction(instruction);
+        setFormOrganDonor(donor);
       }
 
       if (medicalInfo) {
-        setAllergies(medicalInfo.allergies || '');
-        setMedicalConditions(medicalInfo.medical_conditions || '');
-        setMedications(medicalInfo.medications || '');
+        const allergiesVal = medicalInfo.allergies || '';
+        const conditionsVal = medicalInfo.medical_conditions || '';
+        const medsVal = medicalInfo.medications || '';
+
+        // Saved snapshot
+        setAllergies(allergiesVal);
+        setMedicalConditions(conditionsVal);
+        setMedications(medsVal);
+
+        // Prefill form
+        setFormAllergies(allergiesVal);
+        setFormMedicalConditions(conditionsVal);
+        setFormMedications(medsVal);
       }
 
       if (emergencyNote && emergencyNote.note) {
         setEmergencyInstruction(emergencyNote.note);
+        setFormEmergencyInstruction(emergencyNote.note);
       }
     }
+  } catch (err) {
+    console.error('Dashboard fetchData error:', err);
+  } finally {
     setLoading(false);
+  }
   };
 
   const handleRequestOtp = async () => {
@@ -216,11 +327,71 @@ export default function DashboardPage() {
       .single();
 
     if (!error && data) {
-      setContacts([...contacts, data]);
+      const updated = [...contacts, data];
+      setContacts(updated);
       setNewContact({ name: '', relation: '', phone: '' });
-      setIsAddingContact(false);
+      // Keep the form open so user can add another contact
+      // but close it automatically once the max (3) is reached
+      if (updated.length >= 3) {
+        setIsAddingContact(false);
+      }
     }
     setSavingContact(false);
+  };
+
+  const handleStartEditContact = (contact: Contact) => {
+    setEditingContactId(contact.id);
+    setEditingContact({
+      name: contact.name,
+      relation: contact.relation,
+      phone: contact.phone,
+    });
+  };
+
+  const handleCancelEditContact = () => {
+    setEditingContactId(null);
+    setEditingContact({ name: '', relation: '', phone: '' });
+  };
+
+  const handleUpdateContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingContactId) return;
+    setSavingContactEdit(true);
+
+    const { data, error } = await supabase
+      .from('emergency_contacts')
+      .update({
+        name: editingContact.name,
+        relation: editingContact.relation,
+        phone: editingContact.phone,
+      })
+      .eq('id', editingContactId)
+      .select()
+      .single();
+
+    if (!error && data) {
+      setContacts((prev) =>
+        prev.map((c) => (c.id === editingContactId ? (data as Contact) : c))
+      );
+      setEditingContactId(null);
+      setEditingContact({ name: '', relation: '', phone: '' });
+    }
+
+    setSavingContactEdit(false);
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    const { error } = await supabase
+      .from('emergency_contacts')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      setContacts((prev) => prev.filter((c) => c.id !== id));
+      if (editingContactId === id) {
+        handleCancelEditContact();
+      }
+    }
   };
 
   const handlePayment = () => {
@@ -243,7 +414,18 @@ export default function DashboardPage() {
     setSavingEmergencyProfile(true);
 
     try {
-      const parsedAge = age ? parseInt(age, 10) : null;
+      const parsedAge = formAge ? parseInt(formAge, 10) : null;
+
+      // Backend tables have NOT NULL constraints for some fields.
+      // To avoid save failures when user leaves them blank, send a safe placeholder.
+      const safeAllergies =
+        formAllergies.trim() === '' ? 'Not specified' : formAllergies;
+      const safeMedicalConditions =
+        formMedicalConditions.trim() === '' ? 'Not specified' : formMedicalConditions;
+      const safeEmergencyInstruction =
+        formEmergencyInstruction.trim() === ''
+          ? 'Not specified'
+          : formEmergencyInstruction;
 
       const [{ error: epError }, { error: miError }, { error: noteError }] =
         await Promise.all([
@@ -252,11 +434,11 @@ export default function DashboardPage() {
             .upsert(
               {
                 profile_id: profile.id,
-                blood_group: bloodGroup,
-                guardian_phone: guardianPhone,
-                emergency_instruction: emergencyInstruction,
-                organ_donor: organDonor,
-                language_note: languageNote,
+                blood_group: formBloodGroup.toUpperCase(),
+                guardian_phone: formGuardianPhone,
+                emergency_instruction: safeEmergencyInstruction,
+                organ_donor: formOrganDonor,
+                language_note: formLanguageNote,
                 age: parsedAge,
               },
               { onConflict: 'profile_id' }
@@ -266,9 +448,9 @@ export default function DashboardPage() {
             .upsert(
               {
                 profile_id: profile.id,
-                allergies,
-                medical_conditions: medicalConditions,
-                medications,
+                allergies: safeAllergies,
+                medical_conditions: safeMedicalConditions,
+                medications: formMedications,
               },
               { onConflict: 'profile_id' }
             ),
@@ -277,7 +459,7 @@ export default function DashboardPage() {
             .upsert(
               {
                 profile_id: profile.id,
-                note: emergencyInstruction,
+                note: safeEmergencyInstruction,
               },
               { onConflict: 'profile_id' }
             ),
@@ -287,6 +469,18 @@ export default function DashboardPage() {
         console.error('Emergency profile save errors:', { epError, miError, noteError });
         setEmergencyError('Failed to save emergency profile. Please try again.');
       } else {
+        // Update saved snapshot used in summaries
+        setGuardianPhone(formGuardianPhone);
+        setBloodGroup(formBloodGroup.toUpperCase());
+        setLanguageNote(formLanguageNote);
+        setAge(formAge);
+        setEmergencyInstruction(safeEmergencyInstruction);
+        setOrganDonor(formOrganDonor);
+        setAllergies(safeAllergies);
+        setMedicalConditions(safeMedicalConditions);
+        setMedications(formMedications);
+
+        // Keep form values so user can edit / delete later.
         setEmergencyStatus('Emergency profile saved successfully.');
       }
     } catch (error) {
@@ -336,10 +530,17 @@ export default function DashboardPage() {
     );
   }
 
+  const sectionVariants = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.33, 1, 0.68, 1] } } };
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black pb-20">
       {/* Header */}
-      <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10">
+      <motion.header
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+        className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10 shadow-sm"
+      >
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-red-600 p-1.5 rounded-lg">
@@ -347,73 +548,323 @@ export default function DashboardPage() {
             </div>
             <span className="font-bold text-zinc-900 dark:text-white">Dashboard</span>
           </div>
-          <button onClick={handleLogout} className="text-zinc-500 hover:text-red-600 transition-colors p-2">
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-        {/* Welcome Card */}
-        <section className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Hello, {profile?.full_name}!</h1>
-          <p className="text-zinc-500">Manage your emergency contacts and vehicle QR code.</p>
-
-          {/* Mobile verification status */}
-          {!profile?.mobile_verified && (
-            <div className="mt-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40">
-              <div className="flex flex-col gap-3">
-                <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                  Verify your mobile number
-                </div>
-                <p className="text-xs text-amber-800 dark:text-amber-300">
-                  We use OTP verification to ensure we can reliably reach your guardian and emergency contacts.
-                </p>
-                {otpError && (
-                  <div className="text-xs text-red-600 dark:text-red-400 font-medium">
-                    {otpError}
-                  </div>
-                )}
-                {otpStatus && (
-                  <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                    {otpStatus}
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
-                  <button
-                    type="button"
-                    onClick={handleRequestOtp}
-                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:opacity-90 transition"
-                  >
-                    {otpRequested ? 'Resend OTP' : 'Send OTP'}
-                  </button>
-                  <form onSubmit={handleVerifyOtp} className="flex-1 flex gap-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 6-digit OTP"
-                      className="flex-1 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-xs sm:text-sm"
-                    />
-                    <button
-                      type="submit"
-                      className="px-3 py-2 rounded-xl bg-red-600 text-white text-xs sm:text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition"
-                      disabled={!otp}
-                    >
-                      Verify
-                    </button>
-                  </form>
-                </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((open) => !open)}
+              className="w-9 h-9 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center hover:opacity-90 transition-colors"
+            >
+              <User className="w-4 h-4" />
+            </button>
+            {profileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    router.push('/profile');
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Profile</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    if (typeof window !== 'undefined') {
+                      const el = document.getElementById('qr-section');
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Your QR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setProfileMenuOpen(false);
+                    await supabase.auth.signOut();
+                    router.push('/login');
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
               </div>
+            )}
+          </div>
+        </div>
+      </motion.header>
+
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="max-w-5xl mx-auto px-4 py-8 space-y-8"
+      >
+        {/* Welcome Card (OTP verification temporarily hidden) */}
+        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="rounded-[32px] overflow-hidden">
+          <Card3D tilt={false} lift className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
+              Hello, {profile?.full_name}!
+            </h1>
+            <p className="text-zinc-500 dark:text-zinc-400">Manage your emergency contacts and vehicle QR code.</p>
+          </Card3D>
+        </motion.section>
+
+        {/* Emergency Contacts overview (between welcome and profile) */}
+        {contacts.length > 0 && (
+          <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Phone className="w-4 h-4 text-red-600" /> Emergency Contacts
+              </h2>
+              <span className="text-[11px] text-zinc-400 uppercase tracking-[0.18em]">
+                Saved ({contacts.length})
+              </span>
+            </div>
+            <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 divide-y divide-zinc-100 dark:divide-zinc-800">
+              {contacts.map((contact) => (
+                <div key={contact.id} className="px-3 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 text-sm font-bold">
+                      {contact.name[0]}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                        {contact.name}
+                      </div>
+                      <div className="text-[11px] text-zinc-500 uppercase tracking-wider">
+                        {contact.relation}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[11px] font-mono text-zinc-500">{contact.phone}</div>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Emergency Profile (basic info) */}
+        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <User className="w-5 h-5 text-red-600" /> Emergency Profile
+            </h2>
+            <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+              Basic details
+            </span>
+          </div>
+
+          {emergencyError && (
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium border border-red-100 dark:border-red-800">
+              {emergencyError}
             </div>
           )}
-        </section>
 
-        <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={profile?.full_name || ''}
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 text-sm text-zinc-500"
+                  placeholder="Your full name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={formGuardianPhone}
+                  onChange={(e) => setFormGuardianPhone(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                    Blood Group
+                  </label>
+                  <select
+                    required
+                    value={formBloodGroup}
+                    onChange={(e) => setFormBloodGroup(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm uppercase"
+                  >
+                    <option value="" disabled>
+                      Select
+                    </option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                    Age
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    value={formAge}
+                    onChange={(e) => setFormAge(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                    placeholder="32"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Language
+                </label>
+                <select
+                  value={formLanguageNote}
+                  onChange={(e) => setFormLanguageNote(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                >
+                  <option value="" disabled>
+                    Select preferred language
+                  </option>
+                  <option value="English">English</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="Kannada">Kannada</option>
+                  <option value="Tamil">Tamil</option>
+                  <option value="Telugu">Telugu</option>
+                  <option value="Malayalam">Malayalam</option>
+                  <option value="Marathi">Marathi</option>
+                  <option value="Gujarati">Gujarati</option>
+                  <option value="Bengali">Bengali</option>
+                  <option value="Punjabi">Punjabi</option>
+                  <option value="Odia">Odia</option>
+                  <option value="Assamese">Assamese</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="organ-donor"
+                  type="checkbox"
+                  checked={formOrganDonor}
+                  onChange={(e) => setFormOrganDonor(e.target.checked)}
+                  className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700"
+                />
+                <label htmlFor="organ-donor" className="text-xs text-zinc-500">
+                  Mark as organ donor
+                </label>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Emergency Medical Info */}
+        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <HeartPulse className="w-5 h-5 text-red-600" /> Medical Information
+            </h2>
+            <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+              Critical medical details
+            </span>
+          </div>
+
+          <form onSubmit={handleSaveEmergencyProfile} className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Allergies (highlighted in red on scan page)
+                </label>
+                <textarea
+                  value={formAllergies}
+                  onChange={(e) => setFormAllergies(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  placeholder="E.g. Cannot tolerate anesthesia, allergic to penicillin"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Medical Conditions
+                </label>
+                <textarea
+                  value={formMedicalConditions}
+                  onChange={(e) => setFormMedicalConditions(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  placeholder="E.g. Diabetes, hypertension, epilepsy"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Medications
+                </label>
+                <textarea
+                  value={formMedications}
+                  onChange={(e) => setFormMedications(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  placeholder="E.g. On blood thinners, insulin"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Critical Emergency Instructions (shown prominently)
+                </label>
+                <textarea
+                  value={formEmergencyInstruction}
+                  onChange={(e) => setFormEmergencyInstruction(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  placeholder="E.g. Contact guardian before surgery. Do not administer general anesthesia without prior evaluation."
+                />
+              </div>
+            </div>
+
+            <div className="md:col-span-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={savingEmergencyProfile}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50"
+              >
+                {savingEmergencyProfile ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Save Emergency Info'
+                )}
+              </button>
+            </div>
+          </form>
+        </motion.section>
+
+        <motion.div variants={sectionVariants} initial="hidden" animate="visible" className="grid md:grid-cols-2 gap-8">
           {/* QR Status & Payment */}
-          <section className="space-y-6">
+          <section className="space-y-6" id="qr-section">
             <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-red-600" /> QR Status
@@ -427,7 +878,7 @@ export default function DashboardPage() {
                       <div>
                         <h3 className="font-bold text-amber-900 dark:text-amber-400">QR Not Active</h3>
                         <p className="text-sm text-amber-700 dark:text-amber-500 mt-1">
-                          Activate your QRgency QR by paying a one-time fee of ₹10.
+                          Activate your kavach QR by paying a one-time fee of ₹299.
                         </p>
                       </div>
                     </div>
@@ -436,7 +887,7 @@ export default function DashboardPage() {
                     onClick={handlePayment}
                     className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-600/20"
                   >
-                    Pay ₹10 & Activate QR
+                    Pay ₹299 & Activate QR
                   </button>
                 </div>
               ) : (
@@ -444,7 +895,7 @@ export default function DashboardPage() {
                   <div className="mx-auto w-fit p-4 bg-white rounded-3xl border-8 border-zinc-50 shadow-inner">
                     <QRCodeSVG 
                       ref={qrRef}
-                      value={`https://${typeof window !== 'undefined' ? window.location.host : ''}/e/${qrToken}`} 
+                      value={`https://kavach.world/e/${qrToken}`} 
                       size={180}
                       level="H"
                     />
@@ -481,6 +932,58 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* Compact summary of Emergency Profile in this card */}
+              {(guardianPhone || bloodGroup || age || languageNote || emergencyInstruction) && (
+                <div className="mb-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                      Emergency profile summary
+                    </span>
+                    {bloodGroup && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600">
+                        {bloodGroup}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                    {guardianPhone && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+                          Guardian
+                        </span>
+                        <span className="font-mono">{guardianPhone}</span>
+                      </div>
+                    )}
+                    {age && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+                          Age
+                        </span>
+                        <span>{age} yrs</span>
+                      </div>
+                    )}
+                    {languageNote && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+                          Language
+                        </span>
+                        <span className="truncate max-w-[220px] text-right">{languageNote}</span>
+                      </div>
+                    )}
+                    {emergencyInstruction && (
+                      <div className="mt-1">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                          Critical note
+                        </p>
+                        <p className="text-xs text-zinc-700 dark:text-zinc-200 line-clamp-2">
+                          {emergencyInstruction}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {!profile?.is_paid ? (
                 <div className="text-center py-12">
                   <div className="bg-zinc-50 dark:bg-zinc-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -490,20 +993,109 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {contacts.map((contact) => (
-                    <div key={contact.id} className="p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 font-bold">
-                          {contact.name[0]}
-                        </div>
-                        <div>
-                          <div className="font-bold text-zinc-900 dark:text-white">{contact.name}</div>
-                          <div className="text-xs text-zinc-500 uppercase tracking-wider">{contact.relation}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{contact.phone}</div>
+                  {contacts.length > 0 && (
+                    <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {contacts.map((contact) =>
+                        editingContactId === contact.id ? (
+                          <form
+                            key={contact.id}
+                            onSubmit={handleUpdateContact}
+                            className="px-4 py-3 space-y-3"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                                Edit contact
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleCancelEditContact}
+                                className="text-xs text-zinc-500 hover:text-red-600"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                            <input
+                              placeholder="Contact Name"
+                              required
+                              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                              value={editingContact.name}
+                              onChange={(e) =>
+                                setEditingContact((prev) => ({ ...prev, name: e.target.value }))
+                              }
+                            />
+                            <input
+                              placeholder="Relation (e.g. Father)"
+                              required
+                              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                              value={editingContact.relation}
+                              onChange={(e) =>
+                                setEditingContact((prev) => ({ ...prev, relation: e.target.value }))
+                              }
+                            />
+                            <input
+                              placeholder="Phone Number"
+                              required
+                              type="tel"
+                              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                              value={editingContact.phone}
+                              onChange={(e) =>
+                                setEditingContact((prev) => ({ ...prev, phone: e.target.value }))
+                              }
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="submit"
+                                disabled={savingContactEdit}
+                                className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50"
+                              >
+                                {savingContactEdit ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                ) : (
+                                  'Save Changes'
+                                )}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div
+                            key={contact.id}
+                            className="px-4 py-3 flex items-center justify-between gap-4"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 font-bold">
+                                {contact.name[0]}
+                              </div>
+                              <div>
+                                <div className="font-bold text-zinc-900 dark:text-white">
+                                  {contact.name}
+                                </div>
+                                <div className="text-xs text-zinc-500 uppercase tracking-wider">
+                                  {contact.relation}
+                                </div>
+                                <div className="text-xs text-zinc-500">{contact.phone}</div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditContact(contact)}
+                                className="text-xs text-zinc-500 hover:text-red-600"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteContact(contact.id)}
+                                className="text-xs text-red-600 hover:text-red-700"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      )}
                     </div>
-                  ))}
+                  )}
 
                   {isAddingContact && (
                     <form onSubmit={handleAddContact} className="p-6 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 space-y-4">
@@ -555,170 +1147,8 @@ export default function DashboardPage() {
               )}
             </div>
           </section>
-        </div>
-
-        {/* Emergency Profile & Medical Info */}
-        <section className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-red-600" /> Emergency Profile
-            </h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-              Critical medical information
-            </span>
-          </div>
-
-          {emergencyError && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium border border-red-100 dark:border-red-800">
-              {emergencyError}
-            </div>
-          )}
-          {emergencyStatus && (
-            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-100 dark:border-emerald-800">
-              {emergencyStatus}
-            </div>
-          )}
-
-          <form onSubmit={handleSaveEmergencyProfile} className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Guardian Phone (Primary)
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={guardianPhone}
-                  onChange={(e) => setGuardianPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                    Blood Group
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={bloodGroup}
-                    onChange={(e) => setBloodGroup(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm uppercase"
-                    placeholder="O+"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                    Age
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={120}
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                    placeholder="32"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Language Note
-                </label>
-                <input
-                  type="text"
-                  value={languageNote}
-                  onChange={(e) => setLanguageNote(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                  placeholder="Prefers Kannada / Hindi"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="organ-donor"
-                  type="checkbox"
-                  checked={organDonor}
-                  onChange={(e) => setOrganDonor(e.target.checked)}
-                  className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700"
-                />
-                <label htmlFor="organ-donor" className="text-xs text-zinc-500">
-                  Mark as organ donor
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Allergies (highlighted in red on scan page)
-                </label>
-                <textarea
-                  required
-                  value={allergies}
-                  onChange={(e) => setAllergies(e.target.value)}
-                  rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                  placeholder="E.g. Cannot tolerate anesthesia, allergic to penicillin"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Medical Conditions
-                </label>
-                <textarea
-                  required
-                  value={medicalConditions}
-                  onChange={(e) => setMedicalConditions(e.target.value)}
-                  rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                  placeholder="E.g. Diabetes, hypertension, epilepsy"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Medications
-                </label>
-                <textarea
-                  value={medications}
-                  onChange={(e) => setMedications(e.target.value)}
-                  rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                  placeholder="E.g. On blood thinners, insulin"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Critical Emergency Instructions (shown prominently)
-                </label>
-                <textarea
-                  required
-                  value={emergencyInstruction}
-                  onChange={(e) => setEmergencyInstruction(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                  placeholder="E.g. Contact guardian before surgery. Do not administer general anesthesia without prior evaluation."
-                />
-              </div>
-            </div>
-
-            <div className="md:col-span-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={savingEmergencyProfile}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50"
-              >
-                {savingEmergencyProfile ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Save Emergency Profile'
-                )}
-              </button>
-            </div>
-          </form>
-        </section>
-      </main>
+        </motion.div>
+      </motion.main>
       <PaymentModal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}

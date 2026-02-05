@@ -1,10 +1,18 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Loader2 } from 'lucide-react';
 
-export default function AdminLoginPage() {
+type PageProps = {
+  params?: Promise<Record<string, string | string[]>>;
+  searchParams?: Promise<Record<string, string | string[]>>;
+};
+
+export default function AdminLoginPage(props: PageProps) {
+  if (props.params) React.use(props.params);
+  if (props.searchParams) React.use(props.searchParams);
   const router = useRouter();
   const [email, setEmail] = useState('admin@gmail.com');
   const [password, setPassword] = useState('admin123');

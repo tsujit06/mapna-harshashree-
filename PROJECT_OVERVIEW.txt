@@ -1,0 +1,124 @@
+================================================================================
+                    PROJECT OVERVIEW — KAVACH (QRgency)
+                    Scan. Connect. Save lives.
+================================================================================
+
+WHAT IS THIS PROJECT?
+---------------------
+This is a web app called "Kavach" (the codebase name is Orchids QRgency). It is
+built for one main idea: when someone has an accident or emergency (e.g. on a
+bike or in a vehicle), a stranger or first responder can scan a QR code on the
+person’s helmet or vehicle and instantly see their emergency contacts and
+important medical information—so they can call family or ambulance quickly
+without searching through the person’s phone or wallet.
+
+
+WHO IS IT FOR?
+--------------
+- People who ride bikes or drive and want a simple way to share emergency info
+  (contacts, blood group, allergies, medical conditions) without unlocking a
+  phone.
+- First responders or bystanders who find someone in need and want to help
+  quickly by calling the right people and knowing critical health details.
+
+
+MAIN FEATURES (WHAT THE APP DOES)
+---------------------------------
+
+1. LANDING / MARKETING WEBSITE
+   - Homepage that explains the product: register, get a QR, stick it on vehicle
+     or helmet, so in an emergency anyone can scan and see your details.
+   - Sections: hero, how it works (register → generate QR → keep it on vehicle),
+     pricing, and a clear call-to-action to sign up or log in.
+   - Links in the footer: Privacy, Security, About, contact email, WhatsApp,
+     Instagram.
+
+2. USER REGISTRATION AND LOGIN
+   - New users can create an account (email, password, full name, mobile).
+   - Existing users log in with email and password.
+   - Mobile number is verified using OTP (one-time password) so the account is
+     tied to a real phone number.
+
+3. USER DASHBOARD (AFTER LOGIN)
+   - User sees their profile and can manage:
+     - Emergency profile: blood group, guardian phone, secondary contact,
+       emergency instruction note, age, language preference, organ donor status.
+     - Medical info: allergies, medical conditions, medications.
+     - Up to three emergency contacts (name, relation, phone).
+   - User can add, edit, and remove contacts.
+   - User can activate their unique QR code from the dashboard.
+
+4. QR CODE ACTIVATION
+   - Each user gets one unique QR code linked to their emergency profile.
+   - Activation is “one-time lifetime”: pay once (or get it free if you’re in the
+     first 1000 customers), then the QR is valid for life.
+   - Pricing shown to users: first 1000 customers free, then ₹299 one-time.
+   - After activation, the user can download the QR and put it on their vehicle
+     or helmet. The QR does not contain any personal data—it only contains a
+     secure token that opens the emergency page when scanned.
+
+5. EMERGENCY SCAN PAGE (PUBLIC)
+   - When someone scans the QR, they are taken to a public page that shows only
+     the information needed to help in an emergency:
+     - Name and age of the person.
+     - Preferred language.
+     - Blood group (clearly highlighted).
+     - Severe allergies (in a prominent alert).
+     - Medical conditions and medications.
+     - A critical emergency instruction (e.g. “Call my wife first” or “I have
+       epilepsy”).
+     - Big buttons to call the guardian and secondary contact.
+     - List of up to three emergency contacts with “tap to call.”
+     - Quick buttons for emergency numbers (e.g. 112 for ambulance, police, fire).
+   - The page does not collect any data from the person who scanned; it only
+     shows what the vehicle owner set up. It is designed to load fast on mobile.
+
+6. USER PROFILE PAGE
+   - Logged-in users can open a profile page to update their name, mobile,
+     avatar, date of birth, and similar account details.
+
+7. STATIC PAGES
+   - About: what Kavach is, why it exists, how information can be updated.
+   - Privacy: how user and emergency data are handled.
+   - Security: how the product is built with security in mind.
+
+8. ADMIN PANEL
+   - Separate login at /admin for administrators (not regular users).
+   - After login, admins see a dashboard with:
+     - Total users, paid vs free activations, number of QR codes, and revenue.
+     - Search users by mobile number.
+     - List of recent users with their activation status (free or paid) and QR
+       token.
+     - Recent scan logs (when and from where a QR was scanned).
+     - Ability to disable or re-enable a user’s QR code (e.g. if misused or
+       requested by the user).
+
+9. PAYMENTS
+   - The app is set up to support one-time activation payment (first 1000 free,
+     then paid). Payment integration (e.g. Razorpay) exists in the code; the
+     README notes that payments can be mocked for development (e.g. first 1000
+     free, then a mock payment is recorded).
+
+10. MOBILE OTP
+    - Phone numbers are verified by sending an OTP. In development, OTP can be
+      mocked (e.g. code shown in server logs); later it can be connected to a
+      real SMS provider without changing the main app flow.
+
+
+IN SHORT
+--------
+- Users sign up, verify mobile, fill emergency and medical info, add contacts,
+  and activate a QR code (free for first 1000, then one-time fee).
+- They put the QR on their vehicle or helmet.
+- In an emergency, anyone can scan the QR and see a simple page with contacts,
+  blood group, allergies, and instructions—and call with one tap.
+- Admins can monitor users, activations, scans, and revenue, and can turn off a
+  user’s QR if needed.
+
+The project is a complete product from landing page to user dashboard to
+emergency page and admin tools, focused on “instant emergency contacts via QR”
+for real-world safety.
+
+================================================================================
+End of overview.
+================================================================================

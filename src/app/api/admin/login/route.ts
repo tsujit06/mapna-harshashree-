@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import { supabaseAdmin } from '../../../../../../backend/supabaseAdminClient';
+import { supabaseAdmin } from '../../../../../backend/supabaseAdminClient';
 
 export async function POST(request: Request) {
   try {
