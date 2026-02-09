@@ -5,6 +5,7 @@ import {
   getBearerTokenFromRequest,
   verifySupabaseToken,
 } from '../../../../../backend/supabaseJwtVerifier';
+import { uploadQrPngToBucket } from '../../../../../backend/qrBucketUploader';
 
 const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -113,6 +114,14 @@ export async function POST(request: Request) {
       .select('token')
       .eq('profile_id', userId)
       .single();
+
+    if (qrCode?.token) {
+      try {
+        await uploadQrPngToBucket(qrCode.token);
+      } catch (err) {
+        console.error('Failed to upload QR PNG to QR bucket (verify):', err);
+      }
+    }
 
     return NextResponse.json({
       success: true,

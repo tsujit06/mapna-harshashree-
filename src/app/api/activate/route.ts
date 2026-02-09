@@ -5,6 +5,7 @@ import {
   getBearerTokenFromRequest,
   verifySupabaseToken,
 } from '../../../../backend/supabaseJwtVerifier';
+import { uploadQrPngToBucket } from '../../../../backend/qrBucketUploader';
 
 export async function POST(request: Request) {
   try {
@@ -59,6 +60,14 @@ export async function POST(request: Request) {
         (qrError as any)?.details ||
         'Activation completed but QR code is missing';
       return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    // Ensure QR image is stored in Supabase Storage `QR` bucket as {token}.png
+    try {
+      await uploadQrPngToBucket(qrCode.token);
+    } catch (err) {
+      console.error('Failed to upload QR PNG to QR bucket:', err);
+      // Non-fatal: activation should still succeed even if image upload fails.
     }
 
     // Work out tiered pricing based on how many activations exist so far

@@ -491,35 +491,34 @@ export default function DashboardPage(props: PageProps) {
     }
   };
 
-  const handleDownloadQR = () => {
-    if (!qrRef.current || !qrToken) return;
+  const handleDownloadQR = async () => {
+    if (!qrToken) return;
 
-    const svg = qrRef.current;
-    const serializer = new XMLSerializer();
-    const svgData = serializer.serializeToString(svg);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0);
+    try {
+      const res = await fetch(`/api/qr/${qrToken}`);
+      if (!res.ok) {
+        console.error('QR download API error', await res.text());
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'kavach-qr.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download QR via API:', err);
+    }
+  };
 
-      const pngUrl = canvas.toDataURL('image/png');
-      const downloadLink = document.createElement('a');
-      downloadLink.href = pngUrl;
-      downloadLink.download = 'qrgency-qr.png';
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
-    };
-
-    img.src = url;
+  const scrollToEmergencyProfile = () => {
+    if (typeof document === 'undefined') return;
+    const el = document.getElementById('emergency-profile');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (loading) {
@@ -652,7 +651,13 @@ export default function DashboardPage(props: PageProps) {
         )}
 
         {/* Emergency Profile (basic info) */}
-        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+        <motion.section
+          id="emergency-profile"
+          variants={sectionVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6"
+        >
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
               <User className="w-5 h-5 text-red-600" /> Emergency Profile
@@ -895,7 +900,7 @@ export default function DashboardPage(props: PageProps) {
                   <div className="mx-auto w-fit p-4 bg-white rounded-3xl border-8 border-zinc-50 shadow-inner">
                     <QRCodeSVG 
                       ref={qrRef}
-                      value={`https://kavach.world/e/${qrToken}`} 
+                      value={`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/e/${qrToken}`} 
                       size={180}
                       level="H"
                     />
@@ -935,15 +940,24 @@ export default function DashboardPage(props: PageProps) {
               {/* Compact summary of Emergency Profile in this card */}
               {(guardianPhone || bloodGroup || age || languageNote || emergencyInstruction) && (
                 <div className="mb-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-4 space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
                       Emergency profile summary
                     </span>
-                    {bloodGroup && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600">
-                        {bloodGroup}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {bloodGroup && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600">
+                          {bloodGroup}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={scrollToEmergencyProfile}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-xs text-zinc-600 dark:text-zinc-300">
                     {guardianPhone && (
