@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     const instance = new Razorpay({ key_id: keyId, key_secret: keySecret });
-    const receipt = `kavach-activation-${userId.slice(0, 8)}-${Date.now()}`.slice(0, 40);
+    const receipt = `rexu-activation-${userId.slice(0, 8)}-${Date.now()}`.slice(0, 40);
 
     const order = await instance.orders.create({
       amount: expectedPaise,

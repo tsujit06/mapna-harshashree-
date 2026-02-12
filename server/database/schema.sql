@@ -1,4 +1,4 @@
--- Kavach (QRgency) - PostgreSQL Schema
+-- REXU (QRgency) - PostgreSQL Schema
 -- Run this once against your database (e.g. psql $DATABASE_URL -f database/schema.sql)
 
 -- Users: one row per registered user. role = 'user' | 'admin'

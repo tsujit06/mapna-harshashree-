@@ -1,7 +1,7 @@
 {
-  "name": "kavach-backend",
+  "name": "rexu-backend",
   "version": "1.0.0",
-  "description": "Production-ready Express backend for Kavach (QRgency) - FREE QR emergency contacts",
+  "description": "Production-ready Express backend for REXU (QRgency) - FREE QR emergency contacts",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["kavach", "qrgency", "emergency", "qr", "express", "postgresql"],
+  "keywords": ["rexu", "qrgency", "emergency", "qr", "express", "postgresql"],
   "author": "",
   "license": "MIT",
   "dependencies": {

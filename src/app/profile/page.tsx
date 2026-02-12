@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, ArrowLeft } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -154,51 +154,49 @@ export default function ProfilePage(props: PageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+      <div className="min-h-screen bg-gradient-to-b from-black via-[#101518] to-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#9AC57A]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black pb-20">
-      <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#101518] to-black pb-20">
+      <header className="bg-[#1F2428] border-b border-[#2B3136]">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <button
             type="button"
             onClick={() => router.push('/dashboard')}
-            className="flex items-center text-zinc-500 hover:text-red-600 transition-colors text-sm"
+            className="w-9 h-9 rounded-full border border-[#3A3F45] flex items-center justify-center text-zinc-500 hover:bg-[#2B3136] hover:text-white transition-colors"
             aria-label="Back to Dashboard"
           >
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-              <span className="border-l-2 border-b-2 border-current rotate-45 inline-block h-2.5 w-2.5" />
-            </span>
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="bg-red-600 p-1.5 rounded-lg">
+            <div className="bg-[#145A3A] p-1.5 rounded-lg">
               <User className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-zinc-900 dark:text-white">Profile</span>
+            <span className="font-bold text-white">Profile</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <section className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm max-w-xl">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
+      <main className="max-w-5xl mx-auto px-4 py-8 flex justify-center">
+        <section className="bg-[#101518]/90 rounded-[28px] p-8 border border-white/10 max-w-xl w-full">
+          <h1 className="text-2xl font-bold text-white mb-2">
             Account details
           </h1>
-          <p className="text-sm text-zinc-500 mb-6">
+          <p className="text-sm text-[#B7BEC4] mb-6">
             Update your basic information used across QRgency.
           </p>
 
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium border border-red-100 dark:border-red-800">
+            <div className="mb-4 p-3 rounded-lg bg-red-950/30 text-red-400 text-sm font-medium border border-red-900/40">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium border border-emerald-100 dark:border-emerald-800">
+            <div className="mb-4 p-3 rounded-lg bg-[#0F3D2E]/30 text-[#9AC57A] text-sm font-medium border border-[#145A3A]">
               {success}
             </div>
           )}
@@ -206,7 +204,7 @@ export default function ProfilePage(props: PageProps) {
           <form onSubmit={handleSave} className="space-y-6">
             {/* Avatar */}
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
+              <div className="w-16 h-16 rounded-full bg-[#2B3136] border border-[#3A3F45] flex items-center justify-center overflow-hidden">
                 {avatarPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -215,22 +213,22 @@ export default function ProfilePage(props: PageProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-lg font-semibold text-zinc-600 dark:text-zinc-300">
+                  <span className="text-lg font-semibold text-zinc-400">
                     {profile?.full_name?.[0] ?? 'U'}
                   </span>
                 )}
               </div>
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="block text-sm font-medium text-[#B7BEC4]">
                   Profile photo
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarChange}
-                  className="text-xs text-zinc-600 dark:text-zinc-300"
+                  className="text-xs text-[#B7BEC4]"
                 />
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[11px] text-[#B7BEC4]/60">
                   For best results, use a square image.
                 </p>
               </div>
@@ -238,7 +236,7 @@ export default function ProfilePage(props: PageProps) {
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-[#B7BEC4] mb-1.5">
                 Full name
               </label>
               <input
@@ -246,30 +244,30 @@ export default function ProfilePage(props: PageProps) {
                 required
                 value={profile?.full_name ?? ''}
                 onChange={(e) => setProfile((p) => (p ? { ...p, full_name: e.target.value } : p))}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black text-zinc-900 dark:text-white text-sm"
+                className="w-full px-4 py-3 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                 placeholder="John Doe"
               />
             </div>
 
             {/* Date of birth */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-[#B7BEC4] mb-1.5">
                 Date of birth
               </label>
               <input
                 type="date"
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black text-zinc-900 dark:text-white text-sm"
+                className="w-full px-4 py-3 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
               />
-              <p className="text-[11px] text-zinc-400 mt-1">
+              <p className="text-[11px] text-[#B7BEC4]/60 mt-1">
                 This will be used to calculate your age for emergency info.
               </p>
             </div>
 
             {/* Mobile */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-[#B7BEC4] mb-1.5">
                 Mobile number
               </label>
               <input
@@ -277,7 +275,7 @@ export default function ProfilePage(props: PageProps) {
                 required
                 value={profile?.mobile ?? ''}
                 onChange={(e) => setProfile((p) => (p ? { ...p, mobile: e.target.value } : p))}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black text-zinc-900 dark:text-white text-sm"
+                className="w-full px-4 py-3 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                 placeholder="+91 98765 43210"
               />
             </div>
@@ -285,7 +283,7 @@ export default function ProfilePage(props: PageProps) {
             <button
               type="submit"
               disabled={saving}
-              className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50"
+              className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-[#145A3A] text-white text-sm font-semibold hover:bg-[#1F7A5A] active:scale-[0.98] transition disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save changes'}
             </button>

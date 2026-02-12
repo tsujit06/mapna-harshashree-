@@ -158,6 +158,13 @@
   perspective: var(--perspective);
   transform-style: preserve-3d;
 }
+.perspective-distant {
+  perspective: 2000px;
+  transform-style: preserve-3d;
+}
+.transform-3d {
+  transform-style: preserve-3d;
+}
 .preserve-3d {
   transform-style: preserve-3d;
 }
@@ -213,11 +220,45 @@
 }
 
 .bg-textured-hero {
-  background-color: #0d1512;
-  background-image: url('/fasdf.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: #080c0a;
+  background-image:
+    radial-gradient(ellipse 60% 30% at 50% 100%, rgba(15, 61, 46, 0.15), transparent 70%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glowing planet-edge arc at the bottom of the hero */
+.hero-arc {
+  position: absolute;
+  left: 50%;
+  bottom: -180vw;
+  transform: translateX(-50%);
+  width: 200vw;
+  height: 200vw;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    0 0 100px 2px rgba(20, 90, 58, 0.7),
+    0 0 200px 6px rgba(20, 90, 58, 0.4),
+    0 0 400px 12px rgba(15, 61, 46, 0.25),
+    0 0 700px 30px rgba(15, 61, 46, 0.1),
+    inset 0 0 80px 4px rgba(20, 90, 58, 0.18);
+  border: 1.5px solid rgba(154, 197, 122, 0.4);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Subtle green ambient glow above the arc */
+.hero-arc::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -60px;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 120px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(154, 197, 122, 0.15), transparent 70%);
+  filter: blur(40px);
 }
 
 .bg-textured-nav {
@@ -228,6 +269,31 @@
     radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
   background-size: auto, auto, 5px 5px;
   background-blend-mode: normal, soft-light, multiply;
+}
+
+/* Animated gradient background */
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #000000, #0F3D2E, #145A3A, #000000, #0F3D2E);
+  background-size: 400% 400%;
+  animation: gradient-move 15s ease infinite;
+}
+
+.animated-gradient-dark {
+  background: linear-gradient(-45deg, #000000, #0A1F16, #0F3D2E, #145A3A, #0F3D2E, #000000);
+  background-size: 400% 400%;
+  animation: gradient-move 15s ease infinite;
 }
 .dark .glass-card {
   --glass-bg: rgba(24, 24, 27, 0.75);

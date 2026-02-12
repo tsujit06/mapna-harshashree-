@@ -1,16 +1,20 @@
 'use client';
 
 import * as React from 'react';
-import Navbar from '@/components/Navbar';
+import { useState, useEffect } from 'react';
 import { Card3D } from '@/components/Card3D';
 import { GlassCard } from '@/components/GlassCard';
 import { MotionSection, staggerChildVariants } from '@/components/MotionSection';
-import { Shield, Smartphone, QrCode, PhoneCall, CheckCircle2, ArrowRight } from 'lucide-react';
+import { CometCard } from '@/components/ui/comet-card';
+import { MiniTimeline } from '@/components/ui/mini-timeline';
+import Marquee from 'react-fast-marquee';
+import { Shield, Smartphone, QrCode, PhoneCall, CheckCircle2, ArrowRight, Menu, X, User, Lock, Heart, Truck, LayoutDashboard, Users, CreditCard, PhoneOff, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ease = [0.33, 1, 0.68, 1];
 const easeBounce = [0.34, 1.56, 0.64, 1];
+const navEase = { ease: [0.33, 1, 0.68, 1] };
 
 type HomePageProps = {
   params?: Promise<Record<string, string | string[]>>;
@@ -21,13 +25,192 @@ export default function Home(props: HomePageProps) {
   // Next.js 15: unwrap dynamic APIs so they are not enumerated/accessed by dev tooling
   if (props.params) React.use(props.params);
   if (props.searchParams) React.use(props.searchParams);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Typewriter effect for hero heading
+  const [displayedText, setDisplayedText] = useState('');
+  const [showCursor, setShowCursor] = useState(true);
+  const fullText = "Scan. Connect. Save Lives.";
+  const firstPart = "Scan. Connect. ";
+  const secondPart = "Save Lives.";
+  
+  // Typewriter effect for price
+  const [priceText, setPriceText] = useState('');
+  const priceFullText = "₹299";
+  
+  useEffect(() => {
+    let currentIndex = 0;
+    let cursorInterval: NodeJS.Timeout;
+    
+    const typeInterval = setInterval(() => {
+      if (currentIndex < fullText.length) {
+        setDisplayedText(fullText.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(typeInterval);
+        setShowCursor(false); // Hide cursor when typing is complete
+        if (cursorInterval) {
+          clearInterval(cursorInterval);
+        }
+      }
+    }, 80); // Typing speed
+    
+    // Cursor blink effect (only while typing)
+    cursorInterval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 530);
+    
+    return () => {
+      clearInterval(typeInterval);
+      if (cursorInterval) {
+        clearInterval(cursorInterval);
+      }
+    };
+  }, []);
+  
+  // Typewriter effect for price
+  useEffect(() => {
+    let currentIndex = 0;
+    const priceInterval = setInterval(() => {
+      if (currentIndex < priceFullText.length) {
+        setPriceText(priceFullText.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(priceInterval);
+      }
+    }, 150); // Slower typing speed for price
+    
+    return () => clearInterval(priceInterval);
+  }, [priceFullText]);
+  
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden">
-      <Navbar />
-
+    <div className="min-h-screen bg-black text-foreground overflow-hidden">
       {/* Hero — uses provided texture image as background */}
       <section className="relative pt-32 md:pt-40 pb-20 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-textured-hero">
-        <div className="absolute inset-0 bg-black/50 pointer-events-none" aria-hidden />
+        {/* Navbar content at the top of hero section */}
+        <div className="absolute top-0 left-0 right-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-[4.25rem] items-center">
+              <div className="flex items-center">
+                <Link href="/" className="flex items-center gap-2 group">
+                  <motion.div
+                    className="h-12 w-auto"
+                    whileHover={{ scale: 1.03, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2, ...navEase }}
+                  >
+                    <img
+                      src="/rexu-logo.png"
+                      alt="REXU"
+                      className="h-12 w-auto object-contain"
+                    />
+                  </motion.div>
+                </Link>
+              </div>
+
+              <div className="hidden md:flex flex-1 items-center justify-center gap-8">
+                {[
+                  { href: '/#features', label: 'How it works' },
+                  { href: '/#pricing', label: 'Pricing' },
+                  { href: '/about', label: 'About Us' },
+                ].map((item) => (
+                  <motion.div
+                    key={item.href}
+                    whileHover={{ y: -1 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center"
+                  >
+                    <Link
+                      href={item.href}
+                      className="inline-flex items-center justify-center text-sm font-medium text-[#B7BEC4] hover:text-[#145A3A] transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Signup/Login Button */}
+              <div className="hidden md:flex items-center">
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -1 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#9AC57A]/20 border border-[#9AC57A]/40 text-[#9AC57A] text-sm font-medium hover:bg-[#9AC57A]/30 transition-colors"
+                  >
+                    Signup/login
+                  </Link>
+                </motion.div>
+              </div>
+
+              <div className="md:hidden flex items-center">
+                <motion.button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="text-[#E6ECEF] p-2 -m-2 rounded-lg hover:bg-[#2B3136]"
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </motion.button>
+              </div>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ...navEase }}
+                className="md:hidden overflow-hidden bg-[#1F2428] border-b border-[#2B3136]"
+              >
+                <div className="py-4 px-4 space-y-1">
+                  {[
+                    { href: '/#features', label: 'How it works' },
+                    { href: '/#pricing', label: 'Pricing' },
+                    { href: '/about', label: 'About Us' },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 * i, duration: 0.2, ...navEase }}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block py-3 px-3 rounded-xl text-base font-medium text-[#B7BEC4] hover:bg-[#2B3136] hover:text-[#145A3A] transition-colors"
+                      >
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  ))}
+                  {/* Mobile Signup/Login Button */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * 3, duration: 0.2, ...navEase }}
+                    className="pt-2"
+                  >
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block py-3 px-3 rounded-xl text-base font-medium bg-[#9AC57A]/20 border border-[#9AC57A]/40 text-[#9AC57A] hover:bg-[#9AC57A]/30 transition-colors text-center"
+                    >
+                      Signup/login
+                    </Link>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        {/* Glowing green arc at the bottom */}
+        <div className="hero-arc" aria-hidden />
         <div className="max-w-7xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 28 }}
@@ -41,29 +224,45 @@ export default function Home(props: HomePageProps) {
               transition={{ duration: 0.6, delay: 0.2, ease: easeBounce }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2B3136] border border-[#3A3F45] text-[11px] font-semibold tracking-[0.22em] text-[#B7BEC4]"
             >
-              <Shield className="w-4 h-4 text-[#1F7A5A]" /> Kavach · Digital Safety Shield
+              <Shield className="w-4 h-4 text-[#1F7A5A]" /> REXU · Digital Safety Shield
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.28, ease }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-white leading-[1.1]"
-            >
-              Scan. Connect.{' '}
-              <span className="block text-[#9AC57A]">
-                Save Lives.
-              </span>
-            </motion.h1>
+            <div className="min-h-[132px] flex items-start justify-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, delay: 0.28, ease }}
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-white leading-[1.1] w-full"
+              >
+                {displayedText.length <= firstPart.length ? (
+                  <>
+                    {displayedText}
+                    {showCursor && (
+                      <span className="inline-block w-[3px] h-[0.9em] bg-white ml-1 align-middle" />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {firstPart}
+                    <span className="block text-[#9AC57A]">
+                      {displayedText.slice(firstPart.length)}
+                      {showCursor && (
+                        <span className="inline-block w-[3px] h-[0.9em] bg-[#9AC57A] ml-1 align-middle" />
+                      )}
+                    </span>
+                  </>
+                )}
+              </motion.h1>
+            </div>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.38, ease }}
+              initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.7, delay: 0.38, ease }}
               className="max-w-2xl mx-auto text-base sm:text-lg text-[#D1D7DC] leading-relaxed"
             >
               A high‑trust safety layer that lives on your vehicle. In an emergency, anyone can scan
-              your Kavach QR to reach your trusted contacts—securely, even when you can&apos;t use
+              your REXU QR to reach your trusted contacts—securely, even when you can&apos;t use
               your phone.
             </motion.p>
 
@@ -75,20 +274,21 @@ export default function Home(props: HomePageProps) {
             >
               {/* Personal / individual CTA */}
               <motion.div
-                whileHover={{ y: -4, scale: 1.02 }}
+                whileHover={{ scale: 1.01, y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2, ease }}
                 className="w-full sm:w-auto"
               >
                 <Link
-                  href="/register"
-                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-md bg-[#0F3D2E] text-white px-8 py-3.5 text-sm md:text-base font-semibold hover:bg-[#145A3A] active:bg-[#1E6F4E] transition-colors"
+                  href="/#pricing"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[#0A2A1F] text-white px-5 py-2.5 text-sm md:text-base font-semibold hover:bg-[#145A3A] active:bg-[#1E6F4E] border border-black shadow-[0_4px_12px_rgba(0,0,0,0.15)] h-[54px] transition-colors"
                 >
-                  Personal <ArrowRight className="w-5 h-5" />
+                  Get started
+                  <ArrowRight className="w-5 h-5" />
                 </Link>
               </motion.div>
 
-              {/* Commercial / B2B CTA */}
+              {/* About Us CTA */}
               <motion.div
                 whileHover={{ y: -3, scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
@@ -96,10 +296,10 @@ export default function Home(props: HomePageProps) {
                 className="w-full sm:w-auto"
               >
                 <Link
-                  href="/register?segment=commercial"
+                  href="/about"
                   className="inline-flex items-center justify-center w-full sm:w-auto rounded-md border border-[#145A3A] text-[#145A3A] px-8 py-3.5 text-sm md:text-base font-semibold hover:bg-[#145A3A] hover:text-white transition-colors"
                 >
-                  Commercial
+                  About Us
                 </Link>
               </motion.div>
             </motion.div>
@@ -107,215 +307,268 @@ export default function Home(props: HomePageProps) {
         </div>
       </section>
 
-      {/* Stats — simple, high-contrast on dark textured band */}
+      {/* Brands love us section */}
       <MotionSection
-        className="py-16 border-y border-black/60 bg-[#101518]/90"
+        className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-[#101518] to-black"
         stagger
-        staggerDelay={0.07}
+        staggerDelay={0.05}
       >
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { label: 'Setup Time', value: '2 Mins' },
-            { label: 'Launch Offer', value: 'Free*' },
-            { label: 'Activation', value: 'Instant' },
-            { label: 'Security', value: 'Encrypted' },
-          ].map((stat, i) => (
-            <motion.div key={i} variants={staggerChildVariants}>
-              <GlassCard className="p-6 sm:p-8 text-center bg-[#1E2328] border-none">
-                <motion.div
-                  className="text-2xl sm:text-3xl font-semibold text-white"
-                  whileHover={{ scale: 1.04 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {stat.value}
-                </motion.div>
-                <div className="text-sm text-[#B7BEC4] mt-2 font-medium">{stat.label}</div>
-              </GlassCard>
-            </motion.div>
-          ))}
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
+              Brands love us
+            </h2>
+            <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto">
+              REXU is trusted by the best companies who are serious about safety and reliability.
+            </p>
+          </div>
+          
+          {/* Scrolling logos - Single row */}
+          <div className="space-y-6 py-4">
+            <Marquee speed={38} gradient={false} className="gap-8">
+              {[
+                { name: 'REXU' },
+                { name: 'Safety First' },
+                { name: 'SecureRide' },
+                { name: 'SafeGuard' },
+                { name: 'ProtectMe' },
+                { name: 'Guardian' },
+              ].map((brand, i) => (
+                <div key={i} className="flex items-center justify-center px-6 py-4 rounded-xl bg-[#1E2328]/50 border border-white/5 mx-4 w-[180px] h-[66px]">
+                  <span className="text-white font-medium text-sm whitespace-nowrap">{brand.name}</span>
+                </div>
+              ))}
+            </Marquee>
+          </div>
         </div>
       </MotionSection>
 
-      {/* Features — Card3D with gradient icon wells */}
+      {/* What is RexU section */}
+      <MotionSection
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-[#101518] to-black relative overflow-hidden"
+        stagger
+        staggerDelay={0.08}
+      >
+        <div className="max-w-7xl mx-auto space-y-14 relative z-10">
+          {/* Header */}
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">
+              What is <span className="text-[#9AC57A]">RexU</span>?
+            </h2>
+            <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto">
+              A simple QR sticker on your vehicle or ID that connects a bystander to your emergency contacts in seconds.
+            </p>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Card 1 – Instant QR Scanning */}
+            <motion.div
+              variants={staggerChildVariants}
+              className="rounded-[28px] border border-white/10 bg-[#101518]/90 p-8 text-center transition-all duration-300 hover:border-[#145A3A]"
+            >
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0F3D2E]/20 border border-[#0F3D2E]/30">
+                <QrCode className="h-8 w-8 text-[#9AC57A]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">
+                Instant QR Scanning
+              </h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                Anyone can scan your QR with any phone camera — no app needed.
+              </p>
+            </motion.div>
+
+            {/* Card 2 – No Phone Number Exposed */}
+            <motion.div
+              variants={staggerChildVariants}
+              className="rounded-[28px] border border-white/10 bg-[#101518]/90 p-8 text-center transition-all duration-300 hover:border-[#145A3A]"
+            >
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0F3D2E]/20 border border-[#0F3D2E]/30">
+                <PhoneOff className="h-8 w-8 text-[#9AC57A]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">
+                No Phone Number Exposed
+              </h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                Your privacy stays intact. Only emergency contacts are notified.
+              </p>
+            </motion.div>
+
+            {/* Card 3 – Works When You Can't */}
+            <motion.div
+              variants={staggerChildVariants}
+              className="rounded-[28px] border border-white/10 bg-[#101518]/90 p-8 text-center transition-all duration-300 hover:border-[#145A3A]"
+            >
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0F3D2E]/20 border border-[#0F3D2E]/30">
+                <ShieldCheck className="h-8 w-8 text-[#9AC57A]" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">
+                Works When You Can&apos;t
+              </h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                If you&apos;re unconscious or unable to communicate, your QR speaks for you.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </MotionSection>
+
+      {/* Features — Mini Timeline */}
       <MotionSection
         id="features"
-        className="py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-y border-black/60 bg-textured-hero"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-black relative"
         stagger
         staggerDelay={0.12}
       >
-        <motion.div variants={staggerChildVariants} className="text-center mb-20">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-            How it works
-          </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto text-lg">
-            Simple process designed for maximum reliability during emergencies.
-          </p>
-        </motion.div>
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
-          {[
-            {
-              icon: <Smartphone className="w-8 h-8 text-white" />,
-              title: '1. Register & Setup',
-              desc: 'Create your account and add up to 3 emergency contacts like family members or friends.',
-            },
-            {
-              icon: <QrCode className="w-8 h-8 text-white" />,
-              title: '2. Generate QR',
-              desc: 'Activate and download your unique vehicle QR code. Free for the first 1000 customers, then ₹299 one-time.',
-            },
-            {
-              icon: <PhoneCall className="w-8 h-8 text-white" />,
-              title: '3. Scan & Call',
-              desc: 'In an emergency, anyone can scan the QR to call your contacts immediately without any app.',
-            },
-          ].map((feature, i) => (
-            <motion.div key={i} variants={staggerChildVariants}>
-              <Card3D
-                tilt
-                lift
-                className="p-8 lg:p-10 rounded-[28px] border border-white/5 bg-[#101518]/90 h-full shadow-3d relative overflow-hidden"
-              >
-                <div
-                  className="mb-6 p-4 rounded-2xl w-fit bg-[#0F3D2E] shadow-lg shadow-[#0F3D2E]/30"
-                  style={{ transform: 'translateZ(8px)' }}
-                >
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl lg:text-2xl font-bold text-white mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{feature.desc}</p>
-              </Card3D>
-            </motion.div>
-          ))}
+        <div className="max-w-5xl mx-auto">
+          <motion.div variants={staggerChildVariants} className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+              How it works
+            </h2>
+            <p className="text-zinc-400 max-w-2xl mx-auto text-lg">
+              Simple process designed for maximum reliability during emergencies.
+            </p>
+          </motion.div>
+          <MiniTimeline
+            steps={[
+              {
+                icon: <Smartphone className="w-5 h-5 text-white" />,
+                title: 'Register & Setup',
+                desc: 'Create your account and add emergency contacts.',
+              },
+              {
+                icon: <QrCode className="w-5 h-5 text-white" />,
+                title: 'Generate QR',
+                desc: 'Get your unique vehicle QR code instantly.',
+              },
+              {
+                icon: <PhoneCall className="w-5 h-5 text-white" />,
+                title: 'Scan & Call',
+                desc: 'Anyone scans the QR to reach your contacts.',
+              },
+              {
+                icon: <Lock className="w-5 h-5 text-white" />,
+                title: 'Secure & Private',
+                desc: 'Info is encrypted and privacy-first.',
+              },
+              {
+                icon: <Heart className="w-5 h-5 text-white" />,
+                title: 'Always Protected',
+                desc: 'Active 24/7 — help is one scan away.',
+              },
+            ]}
+          />
         </div>
       </MotionSection>
 
-      {/* Pricing — 3D card with glow */}
+      {/* Pricing — Choose Your Plan */}
       <MotionSection
         id="pricing"
-        className="py-28 px-4 sm:px-6 lg:px-8 bg-[#101518]/90 relative overflow-hidden"
+        className="py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-[#101518] to-black relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-500/15 dark:bg-red-500/8 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-400/10 dark:bg-orange-500/5 blur-[100px] rounded-full pointer-events-none" />
-        <div className="max-w-5xl mx-auto relative space-y-10">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#145A3A]/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="max-w-5xl mx-auto relative space-y-12">
           <div className="text-center">
-            <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-4">Lifetime Safety</h2>
-            <p className="text-zinc-300 text-lg max-w-2xl mx-auto">
-              Simple pricing for a service that can save your life.{' '}
-              <span className="font-semibold text-red-400">
-                Free for the first 1000 customers.
-              </span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-4">
+              Choose Your <span className="text-[#9AC57A]">Plan</span>
+            </h2>
+            <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+              Whether you&apos;re an individual rider or managing a fleet — REXU has you covered.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-stretch">
-            {/* Individual / personal plan card */}
-            <Card3D
-              tilt
-              lift
-              className="bg-white dark:bg-zinc-900 rounded-[30px] p-8 sm:p-10 border border-zinc-200 dark:border-zinc-800 shadow-float relative overflow-hidden ring-2 ring-red-500/10 dark:ring-red-500/20"
-            >
-              <div className="absolute top-6 right-6 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white text-xs font-bold shadow-lg shadow-red-600/35">
-                One-time · Individual
-              </div>
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[11px] font-semibold tracking-[0.18em] uppercase text-zinc-700 dark:text-zinc-300">
-                  <span className="w-2 h-2 rounded-full bg-green-500" />
-                  For Individuals & Families
+            {/* Individuals & Families card */}
+            <CometCard rotateDepth={3} translateDepth={4}>
+              <div className="p-8 lg:p-10 rounded-[28px] border border-white/10 bg-[#101518]/90 h-full relative overflow-hidden flex flex-col">
+                {/* Icon */}
+                <div className="mb-6 p-4 rounded-2xl w-fit bg-[#0F3D2E]/20 border border-[#0F3D2E]/30">
+                  <User className="w-8 h-8 text-[#9AC57A]" />
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl sm:text-6xl font-black text-zinc-900 dark:text-white">
-                    ₹299
-                  </span>
-                  <span className="text-zinc-500 dark:text-zinc-400 text-sm">
-                    /one-time after first 1000
-                  </span>
-                </div>
-                <ul className="space-y-3">
+
+                {/* Title */}
+                <h3 className="text-2xl font-extrabold text-white mb-6">
+                  Individuals &amp; Families
+                </h3>
+
+                {/* Features list */}
+                <ul className="space-y-5 mb-10 flex-1">
                   {[
-                    'Instant activation for your vehicle QR',
-                    'Up to 3 trusted emergency contacts',
-                    'Custom QR design for your number plate or helmet',
-                    'Lifetime access to your safety profile',
-                    'No subscriptions or hidden monthly fees',
+                    { icon: <User className="w-5 h-5 text-[#9AC57A]" />, text: 'Personal safety profile' },
+                    { icon: <Heart className="w-5 h-5 text-[#9AC57A]" />, text: 'Family emergency contacts' },
+                    { icon: <Shield className="w-5 h-5 text-[#9AC57A]" />, text: 'Medical info (optional)' },
+                    { icon: <QrCode className="w-5 h-5 text-[#9AC57A]" />, text: 'One QR per person or vehicle' },
+                    { icon: <CheckCircle2 className="w-5 h-5 text-[#9AC57A]" />, text: 'No subscriptions or hidden fees' },
                   ].map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300 text-sm sm:text-base"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" /> {item}
+                    <li key={idx} className="flex items-center gap-3 text-zinc-300 text-sm sm:text-base">
+                      {item.icon}
+                      {item.text}
                     </li>
                   ))}
                 </ul>
-                <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}>
+
+                {/* CTA button */}
+                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href="/register"
-                    className="inline-flex items-center justify-center gap-2 w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3.5 px-6 rounded-2xl font-bold shadow-3d hover:shadow-3d-hover transition-all duration-300 btn-3d"
+                    className="block w-full bg-[#0F3D2E] hover:bg-[#145A3A] text-white py-4 rounded-2xl font-bold transition-all duration-300 text-center text-base"
                   >
-                    Activate Individual Plan
+                    Get Started
                   </Link>
                 </motion.div>
               </div>
-            </Card3D>
+            </CometCard>
 
-            {/* Commercial / fleet plan card */}
-            <Card3D
-              tilt
-              lift
-              className="bg-white/95 dark:bg-zinc-900 rounded-[30px] p-8 sm:p-10 border border-zinc-200 dark:border-zinc-800 shadow-float relative overflow-hidden"
-            >
-              <div className="absolute top-6 right-6 px-4 py-1.5 rounded-full bg-zinc-900 text-white text-xs font-bold shadow-lg shadow-zinc-900/35">
-                Commercial
-              </div>
-              <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="space-y-1 text-left">
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-zinc-600 dark:text-zinc-300">
-                      For Commercial, Fleets & Workplaces
-                    </p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-300">
-                      Built for cabs, delivery vehicles, school buses, housing societies and campuses.
-                    </p>
-                  </div>
-                  <div className="inline-flex p-4 rounded-2xl bg-red-100 dark:bg-red-950/50">
-                    <QrCode className="w-14 h-14 text-red-600 dark:text-red-500" />
-                  </div>
+            {/* Commercial Fleets & Workplaces card */}
+            <CometCard rotateDepth={3} translateDepth={4}>
+              <div className="p-8 lg:p-10 rounded-[28px] border-2 border-[#145A3A] bg-[#101518]/90 h-full relative overflow-hidden flex flex-col">
+                {/* Badge */}
+                <div className="absolute top-6 right-6 px-4 py-1.5 rounded-full bg-[#145A3A] text-white text-xs font-bold">
+                  For Business
                 </div>
-                <div className="mb-4">
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-white">Custom pricing</p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Volume-based plans depending on number of vehicles or locations.
-                  </p>
+
+                {/* Icon */}
+                <div className="mb-6 p-4 rounded-2xl w-fit bg-[#145A3A]/20 border border-[#145A3A]/30">
+                  <Truck className="w-8 h-8 text-[#9AC57A]" />
                 </div>
-                <ul className="space-y-3 mb-6 flex-1">
+
+                {/* Title */}
+                <h3 className="text-2xl font-extrabold text-white mb-6">
+                  Commercial Fleets &amp; Workplaces
+                </h3>
+
+                {/* Features list */}
+                <ul className="space-y-5 mb-10 flex-1">
                   {[
-                    'Bulk QR generation for fleets and assets',
-                    'Configurable contact flows for different teams or sites',
-                    'Dashboard-ready structure for future integrations',
-                    'Priority onboarding assistance for your organisation',
+                    { icon: <LayoutDashboard className="w-5 h-5 text-[#9AC57A]" />, text: 'Admin dashboard' },
+                    { icon: <Truck className="w-5 h-5 text-[#9AC57A]" />, text: 'Multiple vehicles & drivers' },
+                    { icon: <Users className="w-5 h-5 text-[#9AC57A]" />, text: 'Driver assignment per day' },
+                    { icon: <QrCode className="w-5 h-5 text-[#9AC57A]" />, text: 'Bulk QR generation' },
+                    { icon: <CreditCard className="w-5 h-5 text-[#9AC57A]" />, text: 'Single consolidated payment' },
                   ].map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center gap-3 text-zinc-700 dark:text-zinc-200 text-sm sm:text-base"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" /> {item}
+                    <li key={idx} className="flex items-center gap-3 text-zinc-300 text-sm sm:text-base">
+                      {item.icon}
+                      {item.text}
                     </li>
                   ))}
                 </ul>
-                <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}>
+
+                {/* CTA button */}
+                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href="/register?segment=commercial"
-                    className="block w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3.5 rounded-2xl font-bold shadow-3d hover:shadow-3d-hover transition-all duration-300 btn-3d"
+                    className="block w-full bg-[#145A3A] hover:bg-[#1F7A5A] text-white py-4 rounded-2xl font-bold transition-all duration-300 text-center text-base"
                   >
-                    Get Commercial Quote
+                    Request Demo
                   </Link>
                 </motion.div>
               </div>
-            </Card3D>
+            </CometCard>
           </div>
         </div>
       </MotionSection>
+
     </div>
   );
 }

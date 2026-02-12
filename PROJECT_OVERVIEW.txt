@@ -1,11 +1,11 @@
 ================================================================================
-                    PROJECT OVERVIEW — KAVACH (QRgency)
+                    PROJECT OVERVIEW — REXU (QRgency)
                     Scan. Connect. Save lives.
 ================================================================================
 
 WHAT IS THIS PROJECT?
 ---------------------
-This is a web app called "Kavach" (the codebase name is Orchids QRgency). It is
+This is a web app called "REXU" (the codebase name is Orchids QRgency). It is
 built for one main idea: when someone has an accident or emergency (e.g. on a
 bike or in a vehicle), a stranger or first responder can scan a QR code on the
 person’s helmet or vehicle and instantly see their emergency contacts and
@@ -78,7 +78,7 @@ MAIN FEATURES (WHAT THE APP DOES)
      avatar, date of birth, and similar account details.
 
 7. STATIC PAGES
-   - About: what Kavach is, why it exists, how information can be updated.
+   - About: what REXU is, why it exists, how information can be updated.
    - Privacy: how user and emergency data are handled.
    - Security: how the product is built with security in mind.
 

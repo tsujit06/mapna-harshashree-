@@ -149,7 +149,7 @@ export function PaymentModal({
           key: keyId,
           amount: quote.amountPaise,
           currency: 'INR',
-          name: 'KAVACH',
+          name: 'REXU',
           description: 'One-time QR activation',
           order_id: orderId,
           theme: { color: '#dc2626' },

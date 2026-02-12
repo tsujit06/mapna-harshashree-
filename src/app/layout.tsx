@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import "./globals.css";
 import ErrorReporter from "@/components/ErrorReporter";
-import { Shield } from "lucide-react";
+import ConditionalFooter from "@/components/ConditionalFooter";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,58 +18,8 @@ export default function RootLayout({
       <body className="antialiased bg-background text-foreground">
         <ErrorReporter />
         <div className="min-h-screen flex flex-col">
-          <div className="flex-1">
-            {children}
-          </div>
-          <footer className="py-10 border-t border-[#2B3136] bg-[#1F2428]">
-            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-              <div className="flex items-center gap-3">
-                <div className="bg-[#0A2A1F] p-1.5 rounded-xl">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">kavach</p>
-                  <p className="text-xs text-[#8A9197]">
-                    © 2026 kavach. Scan. Connect. Save lives.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-sm text-[#B7BEC4]">
-                <Link href="/privacy" className="hover:text-[#145A3A] transition-colors">
-                  Privacy
-                </Link>
-                <Link href="/security" className="hover:text-[#145A3A] transition-colors">
-                  Security
-                </Link>
-                <Link href="/about" className="hover:text-[#145A3A] transition-colors">
-                  About
-                </Link>
-                <a
-                  href="mailto:hello@kavach.app"
-                  className="hover:text-[#145A3A] transition-colors"
-                >
-                  hello@kavach.app
-                </a>
-                <a
-                  href="https://wa.me/919876543210"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-[#145A3A] transition-colors"
-                >
-                  WhatsApp: +91 98765 43210
-                </a>
-                <a
-                  href="https://instagram.com/kavach.app"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-[#145A3A] transition-colors"
-                >
-                  Instagram: @kavach.app
-                </a>
-              </div>
-            </div>
-          </footer>
+          <div className="flex-1">{children}</div>
+          <ConditionalFooter />
         </div>
       </body>
     </html>

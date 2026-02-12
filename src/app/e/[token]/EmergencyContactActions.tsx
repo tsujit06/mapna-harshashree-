@@ -36,22 +36,22 @@ export function EmergencyContactActions({
         <button
           type="button"
           onClick={triggerGuardian}
-          className="block w-full py-4 px-4 rounded-2xl bg-zinc-900/90 border border-zinc-700 hover:border-red-500 hover:bg-zinc-900 transition-colors active:scale-[0.98] text-left"
+          className="block w-full py-4 px-4 rounded-[20px] bg-[#101518]/90 border border-white/10 hover:border-[#9AC57A]/40 hover:bg-[#101518] transition-colors active:scale-[0.98] text-left"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-600/20 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-red-400" />
+              <div className="w-10 h-10 rounded-full bg-[#0F3D2E]/40 border border-[#145A3A]/40 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-[#9AC57A]" />
               </div>
               <div>
-                <div className="text-sm font-semibold">Call Guardian</div>
-                <div className="text-[11px] text-zinc-400 uppercase tracking-[0.18em]">
+                <div className="text-sm font-semibold text-white">Call Guardian</div>
+                <div className="text-[11px] text-[#B7BEC4]/60 uppercase tracking-[0.18em]">
                   Primary emergency contact
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-zinc-400">Tap to call (number hidden)</div>
+              <div className="text-xs text-[#B7BEC4]/50">Tap to call (number hidden)</div>
             </div>
           </div>
         </button>
@@ -61,22 +61,22 @@ export function EmergencyContactActions({
         <button
           type="button"
           onClick={triggerSecondary}
-          className="block w-full py-4 px-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 hover:border-red-400 hover:bg-zinc-900 transition-colors active:scale-[0.98] text-left"
+          className="block w-full py-4 px-4 rounded-[20px] bg-[#101518]/90 border border-white/10 hover:border-[#9AC57A]/30 hover:bg-[#101518] transition-colors active:scale-[0.98] text-left"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-800 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-zinc-200" />
+              <div className="w-10 h-10 rounded-full bg-[#2B3136] border border-[#3A3F45] flex items-center justify-center">
+                <Phone className="w-5 h-5 text-[#B7BEC4]" />
               </div>
               <div>
-                <div className="text-sm font-semibold">Call Emergency Contact</div>
-                <div className="text-[11px] text-zinc-400 uppercase tracking-[0.18em]">
+                <div className="text-sm font-semibold text-white">Call Emergency Contact</div>
+                <div className="text-[11px] text-[#B7BEC4]/60 uppercase tracking-[0.18em]">
                   Backup / secondary
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-zinc-400">Tap to call (number hidden)</div>
+              <div className="text-xs text-[#B7BEC4]/50">Tap to call (number hidden)</div>
             </div>
           </div>
         </button>
@@ -88,16 +88,16 @@ export function EmergencyContactActions({
             <a
               key={contact.id}
               href={`tel:${contact.phone}`}
-              className="block w-full py-3 px-3 rounded-2xl bg-zinc-950/80 border border-zinc-800 hover:border-zinc-600 transition-colors active:scale-[0.98]"
+              className="block w-full py-3 px-3 rounded-[16px] bg-[#101518]/70 border border-white/5 hover:border-white/10 transition-colors active:scale-[0.98]"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="text-left">
-                  <div className="text-xs font-semibold">{contact.name}</div>
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-[0.16em]">
+                  <div className="text-xs font-semibold text-white">{contact.name}</div>
+                  <div className="text-[10px] text-[#B7BEC4]/50 uppercase tracking-[0.16em]">
                     {contact.relation}
                   </div>
                 </div>
-                <div className="text-right text-[11px] text-zinc-400 font-mono">
+                <div className="text-right text-[11px] text-[#B7BEC4] font-mono">
                   {contact.phone}
                 </div>
               </div>

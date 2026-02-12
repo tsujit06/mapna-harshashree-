@@ -55,7 +55,7 @@ app.use('/e', emergencyScanLimiter);
 
 // Health
 app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'kavach-backend' });
+  res.json({ ok: true, service: 'rexu-backend' });
 });
 
 // API routes
@@ -87,7 +87,7 @@ async function start() {
     console.warn('Upload dir creation failed:', err.message);
   }
   app.listen(PORT, () => {
-    console.log(`Kavach backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
+    console.log(`REXU backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
   });
 }
 

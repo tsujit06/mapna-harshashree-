@@ -17,11 +17,22 @@ import {
   CheckCircle2,
   HeartPulse,
   X,
+  Bell,
+  HelpCircle,
+  Settings,
+  CreditCard,
+  Users,
+  LayoutDashboard,
+  Link2,
+  Pencil,
+  Truck,
+  ArrowLeft,
 } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { PaymentModal } from '@/components/PaymentModal';
 import { motion } from 'framer-motion';
-import { Card3D } from '@/components/Card3D';
 
 interface Profile {
   id: string;
@@ -602,7 +613,7 @@ export default function DashboardPage(props: PageProps) {
           const pngUrl = URL.createObjectURL(pngBlob);
           const a = document.createElement('a');
           a.href = pngUrl;
-          a.download = 'kavach-qr.png';
+          a.download = 'rexu-qr.png';
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -638,7 +649,7 @@ export default function DashboardPage(props: PageProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'kavach-qr.png';
+      a.download = 'rexu-qr.png';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -746,7 +757,7 @@ export default function DashboardPage(props: PageProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'kavach-vehicle-qr.png';
+      a.download = 'rexu-vehicle-qr.png';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -900,8 +911,8 @@ export default function DashboardPage(props: PageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#9AC57A]" />
       </div>
     );
   }
@@ -910,149 +921,246 @@ export default function DashboardPage(props: PageProps) {
 
   // B2B / commercial dashboard – separate interface for fleet owners.
   if (profile?.account_type === 'commercial') {
+    const activeQrCount = fleetVehicles.filter((v) => v.qr_token).length;
+
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-black pb-20">
-        <motion.header
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
-          className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10 shadow-sm"
-        >
-          <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-red-600 p-1.5 rounded-lg">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-zinc-900 dark:text-white">Fleet Dashboard</span>
-                <span className="text-[11px] uppercase tracking-[0.2em] text-red-500">
-                  B2B · Vehicles & Drivers
-                </span>
-              </div>
+      <div className="min-h-screen flex bg-[#1F2428]">
+        {/* ── Sidebar ── */}
+        <aside className="hidden md:flex w-[220px] shrink-0 border-r border-[#2B3136] flex-col bg-[#1F2428] sticky top-0 h-screen overflow-y-auto">
+          {/* Logo / profile */}
+          <div className="px-5 pt-4 pb-4 flex flex-col items-center text-center border-b border-[#2B3136]">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="self-start mb-3 w-8 h-8 rounded-full border border-[#3A3F45] flex items-center justify-center text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <Image src="/rexu-logo.png" alt="Rexu" width={56} height={56} className="rounded-full mb-2" />
+            <h2 className="font-bold text-sm text-white">Rexu</h2>
+            <p className="text-[11px] text-[#B7BEC4]">Fleet Account</p>
+            <button
+              type="button"
+              onClick={() => router.push('/profile')}
+              className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#B7BEC4] hover:text-white transition-colors"
+            >
+              <Pencil className="w-3 h-3" /> Edit Profile
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 py-4 space-y-1">
+            <p className="px-5 mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B7BEC4]/60">
+              Fleet Management
+            </p>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-[#9AC57A] bg-[#0F3D2E]/20 border-l-[3px] border-[#9AC57A]"
+            >
+              <LayoutDashboard className="w-4 h-4" /> Fleet Dashboard
+            </Link>
+            <Link
+              href="/fleet"
+              className="flex items-center gap-3 px-5 py-2.5 text-sm text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white border-l-[3px] border-transparent transition-colors"
+            >
+              <Truck className="w-4 h-4" /> Manage Vehicles
+            </Link>
+            <Link
+              href="/drivers"
+              className="flex items-center gap-3 px-5 py-2.5 text-sm text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white border-l-[3px] border-transparent transition-colors"
+            >
+              <Users className="w-4 h-4" /> Manage Drivers
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('assignments-section');
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white border-l-[3px] border-transparent transition-colors"
+            >
+              <Link2 className="w-4 h-4" /> Assignments
+            </button>
+
+            <p className="px-5 mt-6 mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B7BEC4]/60">
+              Account
+            </p>
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 px-5 py-2.5 text-sm text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white border-l-[3px] border-transparent transition-colors"
+            >
+              <Settings className="w-4 h-4" /> Settings
+            </Link>
+            <Link
+              href="/security"
+              className="flex items-center gap-3 px-5 py-2.5 text-sm text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white border-l-[3px] border-transparent transition-colors"
+            >
+              <Shield className="w-4 h-4" /> Security
+            </Link>
+            <button
+              type="button"
+              onClick={handlePayment}
+              className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white border-l-[3px] border-transparent transition-colors"
+            >
+              <CreditCard className="w-4 h-4" /> Billing &amp; Plans
+            </button>
+          </nav>
+
+          {/* Bottom */}
+          <div className="border-t border-[#2B3136] px-5 py-4 space-y-3">
+            <button
+              type="button"
+              className="flex items-center gap-2 text-sm text-[#B7BEC4] hover:text-white transition-colors"
+            >
+              <HelpCircle className="w-4 h-4" /> Help &amp; Support
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push('/login');
+              }}
+              className="flex items-center gap-2 text-sm text-[#B7BEC4] hover:text-red-400 transition-colors w-full"
+            >
+              <span className="w-6 h-6 rounded-full bg-[#2B3136] border border-[#3A3F45] text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+              </span>
+              Logout
+            </button>
+          </div>
+        </aside>
+
+        {/* ── Main content ── */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Top header bar */}
+          <header className="h-16 shrink-0 border-b border-[#2B3136] flex items-center justify-between px-8 bg-[#1F2428] sticky top-0 z-10">
+            <div>
+              <h1 className="text-lg font-bold text-white leading-tight">
+                Fleet Dashboard
+              </h1>
+              <p className="text-xs text-[#B7BEC4]">Vehicles &amp; Drivers</p>
             </div>
-            <div className="relative">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setProfileMenuOpen((open) => !open)}
-                className="w-9 h-9 rounded-full bg-zinc-900 text-white dark:bg.white dark:text-zinc-900 flex items-center justify-center hover:opacity-90 transition-colors"
+                className="p-2 rounded-lg hover:bg-[#2B3136] transition-colors"
               >
-                <User className="w-4 h-4" />
+                <Bell className="w-5 h-5 text-[#B7BEC4]" />
               </button>
-              {profileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-44 rounded-xl border border-zinc-200 dark:border-zinc-800 bg.white dark:bg-zinc-900 shadow-lg py-1 text-sm">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      router.push('/profile');
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>Profile</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setProfileMenuOpen(false);
-                      await supabase.auth.signOut();
-                      router.push('/login');
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((open) => !open)}
+                  className="h-8 px-2.5 rounded-lg bg-[#2B3136] border border-[#3A3F45] text-white text-[11px] font-bold tracking-wide flex items-center justify-center hover:bg-[#3A3F45] transition-colors"
+                >
+                  rexu
+                </button>
+                {profileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#3A3F45] bg-[#1F2428] shadow-lg py-1 text-sm z-20">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        router.push('/profile');
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setProfileMenuOpen(false);
+                        await supabase.auth.signOut();
+                        router.push('/login');
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-400 hover:bg-red-950/30"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </motion.header>
+          </header>
 
-        <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="max-w-5xl mx-auto px-4 py-8 space-y-8"
-        >
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            className="rounded-[32px] overflow-hidden"
-          >
-            <Card3D
-              tilt={false}
-              lift
-              className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm"
-            >
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
-                Welcome, {profile?.full_name}
-              </h1>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                Manage your fleet vehicles and drivers from one place. Vehicle QR codes stay fixed to
-                the vehicle, while drivers can be reassigned any time.
-              </p>
-            </Card3D>
-          </motion.section>
-
-          {/* Quick assignment overview: link drivers to vehicles */}
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  Driver · Vehicle assignments
-                </h2>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                  Vehicles stay fixed · drivers can change
-                </p>
+          {/* Scrollable main area */}
+          <main className="flex-1 overflow-y-auto p-8 space-y-6 bg-gradient-to-b from-[#1F2428] via-[#101518] to-[#1F2428]">
+            {/* ── Stats cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="border border-white/10 rounded-[28px] bg-[#101518]/90 p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-[#B7BEC4] mb-1">Total Vehicles</p>
+                  <p className="text-3xl font-bold text-white">{fleetVehicles.length}</p>
+                </div>
+                <Truck className="w-6 h-6 text-[#B7BEC4]/40" />
+              </div>
+              <div className="border border-white/10 rounded-[28px] bg-[#101518]/90 p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-[#B7BEC4] mb-1">Total Drivers</p>
+                  <p className="text-3xl font-bold text-white">{fleetDrivers.length}</p>
+                </div>
+                <Users className="w-6 h-6 text-[#B7BEC4]/40" />
+              </div>
+              <div className="border border-white/10 rounded-[28px] bg-[#101518]/90 p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-[#B7BEC4] mb-1">Active QR Codes</p>
+                  <p className="text-3xl font-bold text-[#9AC57A]">{activeQrCount}</p>
+                </div>
+                <QrCode className="w-6 h-6 text-[#9AC57A]/40" />
               </div>
             </div>
 
-            {fleetDrivers.length > 0 && fleetVehicles.length > 0 ? (
-              <div className="mt-2 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 max-h-60 overflow-auto">
-                {fleetVehicles.map((vehicle) => {
-                  const assignedDriver = fleetDrivers.find(
-                    (d) => d.assigned_vehicle_id === vehicle.id
-                  );
-                  return (
-                    <div
-                      key={vehicle.id}
-                      className="px-3 py-2.5 flex items-center justify-between gap-3 border-b last:border-b-0 border-zinc-100 dark:border-zinc-800 text-xs"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-zinc-900 dark:text-white">
-                          {vehicle.vehicle_number}
-                        </span>
-                        {assignedDriver && (
-                          <>
-                            <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                              Driver: {assignedDriver.name}
-                            </span>
-                            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
-                              {assignedDriver.phone}
-                            </span>
-                          </>
-                        )}
-                        {!assignedDriver && (
-                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                            No driver assigned
+            {/* ── Driver · Vehicle Assignments ── */}
+            <section
+              id="assignments-section"
+              className="bg-[#101518]/90 rounded-[28px] p-6 border border-white/10 space-y-4"
+            >
+              <div>
+                <h2 className="text-base font-bold text-white">
+                  Driver · Vehicle Assignments
+                </h2>
+                <p className="text-xs text-[#B7BEC4] mt-0.5">
+                  Vehicles stay fixed · Drivers can change
+                </p>
+              </div>
+
+              {fleetDrivers.length > 0 && fleetVehicles.length > 0 ? (
+                <div className="rounded-xl border border-white/5 divide-y divide-white/5">
+                  {fleetVehicles.map((vehicle) => {
+                    const assignedDriver = fleetDrivers.find(
+                      (d) => d.assigned_vehicle_id === vehicle.id
+                    );
+                    return (
+                      <div
+                        key={vehicle.id}
+                        className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-white">
+                            {vehicle.vehicle_number}
                           </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
+                          {assignedDriver ? (
+                            <>
+                              <span className="text-xs text-[#B7BEC4]">
+                                {assignedDriver.name}
+                              </span>
+                              <span className="text-xs text-[#B7BEC4]/60 font-mono">
+                                {assignedDriver.phone}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-[#B7BEC4]/50">No driver assigned</span>
+                          )}
+                        </div>
                         <select
-                          className="px-2 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-black text-[11px] text-zinc-900 dark:text-white"
+                          className="px-3 py-1.5 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-sm text-white"
                           value={assignedDriver?.id ?? ''}
                           onChange={(e) => {
                             const newDriverId = e.target.value;
                             if (!newDriverId) {
-                              // Unassign current driver (if any) from this vehicle
                               if (assignedDriver) {
                                 handleAssignDriver(assignedDriver.id, null);
                               }
@@ -1069,261 +1177,181 @@ export default function DashboardPage(props: PageProps) {
                           ))}
                         </select>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-zinc-400">
-                Add at least one vehicle and one driver to start assigning.
-              </p>
-            )}
-          </motion.section>
-
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid md:grid-cols-2 gap-6"
-          >
-            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    Fleet Vehicles
-                  </h2>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                    Step 1 · Add all vehicles
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsVehicleModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 active:scale-[0.97] transition"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Add Vehicle</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handlePayment}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
-                  >
-                    <Shield className="w-3 h-3" />
-                    <span>Proceed to QR activation</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/fleet')}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
-                  >
-                    <span>Manage vehicles</span>
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Add vehicles by registration number first. You can add many vehicles for the same
-                company, and when you&apos;re ready, use &quot;Proceed to QR activation&quot; to
-                pay and activate QR codes in one go.
-              </p>
-
-              {fleetVehicles.length > 0 ? (
-                <div className="mt-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 max-h-60 overflow-auto">
-                  {fleetVehicles.map((v) => (
-                    <div
-                      key={v.id}
-                      className="px-3 py-2.5 flex items-center justify-between gap-3 border-b last:border-b-0 border-zinc-100 dark:border-zinc-800 text-xs"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-zinc-900 dark:text-white">
-                          {v.vehicle_number}
-                        </span>
-                        {v.label && (
-                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                            {v.label}
-                          </span>
-                        )}
-                        {v.make_model && (
-                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                            {v.make_model}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {v.qr_token ? (
-                          <>
-                            <span className="text-[10px] uppercase tracking-[0.16em] text-green-600">
-                              QR ready
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => v.qr_token && handleDownloadVehicleQr(v.qr_token)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[11px] font-medium hover:bg-zinc-800 dark:hover:bg-zinc-100"
-                            >
-                              <Download className="w-3 h-3" />
-                              <span>Download</span>
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleGenerateVehicleQr(v.id)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                          >
-                            <QrCode className="w-3 h-3" />
-                            <span>Generate QR</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-xs text-zinc-400">
-                  No vehicles added yet. Use &quot;Add Vehicle&quot; to register your first vehicle.
-                </p>
-              )}
-            </div>
-
-            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  Drivers & Assignments
-                </h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsDriverModalOpen(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 text-white text-[11px] font-medium hover:bg-red-700 active:scale-[0.97] transition"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Add driver</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/drivers')}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
-                  >
-                    <span>Manage drivers</span>
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Register drivers and assign them to vehicles. QR codes stay fixed to vehicles, while
-                drivers can change over time.
-              </p>
-
-              {/* Driver list – read-only snapshot (full management on /drivers) */}
-              {fleetDrivers.length > 0 ? (
-                <div className="mt-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 max-h-60 overflow-auto">
-                  {fleetDrivers.map((driver) => {
-                    const assignedVehicle = fleetVehicles.find(
-                      (v) => v.id === driver.assigned_vehicle_id
-                    );
-                    return (
-                      <div
-                        key={driver.id}
-                        className="px-3 py-2.5 flex items-center justify-between gap-3 border-b last:border-b-0 border-zinc-100 dark:border-zinc-800 text-xs"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-zinc-900 dark:text-white">
-                            {driver.name}
-                          </span>
-                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
-                            {driver.phone}
-                          </span>
-                          {driver.blood_group && (
-                            <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                              Blood group: {driver.blood_group}
-                            </span>
-                          )}
-                          {assignedVehicle && (
-                            <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                              Assigned to: {assignedVehicle.vehicle_number}
-                            </span>
-                          )}
-                        </div>
-                      </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="mt-3 text-xs text-zinc-400">
-                  No drivers added yet. Use the form above to create your first driver.
+                <p className="text-xs text-[#B7BEC4]/50">
+                  Add at least one vehicle and one driver to start assigning.
                 </p>
               )}
-            </div>
-          </motion.section>
+            </section>
 
-          <motion.section
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  Step 2 · Activate your QR
-                </h2>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                  Payment & activation for your fleet
-                </p>
-              </div>
-            </div>
-
-            {!profile?.is_paid ? (
-              <div className="space-y-3">
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Once you&apos;ve added all vehicles, activate your Kavach QR for this fleet. After
-                  activation you can download the QR and print stickers for every vehicle.
-                </p>
-                <button
-                  type="button"
-                  onClick={handlePayment}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition"
-                >
-                  <Shield className="w-4 h-4" />
-                  <span>Activate QR for this fleet</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="inline-flex p-3 rounded-2xl bg-red-100 dark:bg-red-900/30">
-                    <QrCode className="w-8 h-8 text-red-600 dark:text-red-400" />
-                  </div>
+            {/* ── Fleet Vehicles & Drivers side by side ── */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Fleet Vehicles */}
+              <section className="bg-[#101518]/90 rounded-[28px] p-6 border border-white/10 space-y-4">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                      QR activated for this fleet
+                    <h2 className="text-base font-bold text-white">
+                      Fleet Vehicles
+                    </h2>
+                    <p className="text-xs text-[#B7BEC4] mt-0.5">
+                      Add vehicles, then activate QR codes
                     </p>
-                    {qrToken && (
-                      <p className="text-[11px] text-zinc-500">
-                        Token:{' '}
-                        <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
-                          {qrToken}
-                        </span>
-                      </p>
-                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsVehicleModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#145A3A] text-white text-xs font-semibold hover:bg-[#1F7A5A] active:scale-[0.97] transition"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Vehicle</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePayment}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#B7BEC4] hover:text-white transition-colors"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>Proceed to QR Activation</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/fleet')}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#3A3F45] text-xs font-medium text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white transition"
+                  >
+                    Manage vehicles
+                  </button>
+                </div>
+
+                {fleetVehicles.length > 0 ? (
+                  <div className="rounded-xl border border-white/5 divide-y divide-white/5">
+                    {fleetVehicles.map((v) => (
+                      <div
+                        key={v.id}
+                        className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-white">
+                            {v.vehicle_number}
+                          </span>
+                          {(v.label || v.make_model) && (
+                            <span className="text-xs text-[#B7BEC4]/60">
+                              {[v.label, v.make_model].filter(Boolean).join(' · ')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {v.qr_token ? (
+                            <>
+                              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#9AC57A] bg-[#0F3D2E]/30 border border-[#145A3A]/40 rounded-full px-2 py-0.5">
+                                QR Ready
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => v.qr_token && handleDownloadVehicleQr(v.qr_token)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#145A3A] text-white text-xs font-medium hover:bg-[#1F7A5A] transition-colors"
+                              >
+                                <Download className="w-3 h-3" />
+                                Download
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleGenerateVehicleQr(v.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#3A3F45] text-xs font-medium text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white transition-colors"
+                            >
+                              <QrCode className="w-3 h-3" />
+                              Generate QR
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#B7BEC4]/50">
+                    No vehicles added yet. Use &quot;Add Vehicle&quot; to register your first vehicle.
+                  </p>
+                )}
+              </section>
+
+              {/* Drivers & Assignments */}
+              <section className="bg-[#101518]/90 rounded-[28px] p-6 border border-white/10 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold text-white">
+                      Drivers &amp; Assignments
+                    </h2>
+                    <p className="text-xs text-[#B7BEC4] mt-0.5">
+                      Add drivers and assign to vehicles
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDriverModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#145A3A] text-white text-xs font-semibold hover:bg-[#1F7A5A] active:scale-[0.97] transition"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add Driver</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/drivers')}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#3A3F45] text-xs font-medium text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white transition"
+                    >
+                      Manage Drivers
+                    </button>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Download the activated QR and print one sticker per vehicle. Each scan will use the
-                  emergency contacts and information configured for this fleet owner.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDownloadQR}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-100 active:scale-[0.98] transition"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download activated QR</span>
-                </button>
-              </div>
-            )}
-          </motion.section>
-        </motion.main>
+
+                {fleetDrivers.length > 0 ? (
+                  <div className="rounded-xl border border-white/5 divide-y divide-white/5">
+                    {fleetDrivers.map((driver) => {
+                      const assignedVehicle = fleetVehicles.find(
+                        (v) => v.id === driver.assigned_vehicle_id
+                      );
+                      return (
+                        <div key={driver.id} className="px-4 py-3 hover:bg-white/[0.02] transition-colors">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-sm text-white">
+                              {driver.name}
+                            </span>
+                            <span className="text-xs text-[#B7BEC4]/60 font-mono">
+                              {driver.phone}
+                            </span>
+                            {driver.blood_group && (
+                              <span className="text-xs text-[#B7BEC4]">
+                                Blood group: {driver.blood_group}
+                              </span>
+                            )}
+                            {assignedVehicle && (
+                              <span className="text-xs text-[#B7BEC4]">
+                                Assigned to: {assignedVehicle.vehicle_number}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#B7BEC4]/50">
+                    No drivers added yet. Use &quot;Add Driver&quot; to create your first driver.
+                  </p>
+                )}
+              </section>
+            </div>
+          </main>
+        </div>
+
+        {/* ── Modals ── */}
         <PaymentModal
           isOpen={isPaymentOpen}
           onClose={() => setIsPaymentOpen(false)}
@@ -1335,37 +1363,37 @@ export default function DashboardPage(props: PageProps) {
         {isVehicleModalOpen && (
           <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
               onClick={() => setIsVehicleModalOpen(false)}
             />
-            <div className="relative bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div className="relative bg-[#1F2428] rounded-[28px] w-full max-w-md p-6 shadow-2xl border border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h2 className="text-lg font-semibold text-white">
                     Add Vehicle
                   </h2>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-[#B7BEC4]">
                     Save your vehicle details first, then activate its QR.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsVehicleModalOpen(false)}
-                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="p-2 text-[#B7BEC4] hover:text-white transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {vehicleError && (
-                <div className="mb-3 text-xs text-red-600 dark:text-red-400">
+                <div className="mb-3 text-xs text-red-400">
                   {vehicleError}
                 </div>
               )}
 
               <form onSubmit={handleCreateVehicle} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Vehicle Number
                   </label>
                   <input
@@ -1373,31 +1401,31 @@ export default function DashboardPage(props: PageProps) {
                     required
                     value={vehicleNumber}
                     onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="KA01AB1234"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Label (optional)
                   </label>
                   <input
                     type="text"
                     value={vehicleLabel}
                     onChange={(e) => setVehicleLabel(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="E.g. Cab #21, Delivery Bike 3"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Make &amp; Model (optional)
                   </label>
                   <input
                     type="text"
                     value={vehicleMakeModel}
                     onChange={(e) => setVehicleMakeModel(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="E.g. Tata Ace, Honda Activa"
                   />
                 </div>
@@ -1405,7 +1433,7 @@ export default function DashboardPage(props: PageProps) {
                 <button
                   type="submit"
                   disabled={vehicleSaving}
-                  className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50"
+                  className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#145A3A] text-white text-sm font-semibold hover:bg-[#1F7A5A] active:scale-[0.98] transition disabled:opacity-50"
                 >
                   {vehicleSaving ? (
                     <>
@@ -1424,35 +1452,35 @@ export default function DashboardPage(props: PageProps) {
         {isDriverModalOpen && (
           <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
               onClick={() => setIsDriverModalOpen(false)}
             />
-            <div className="relative bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div className="relative bg-[#1F2428] rounded-[28px] w-full max-w-md p-6 shadow-2xl border border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h2 className="text-lg font-semibold text-white">
                     Add Driver
                   </h2>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-[#B7BEC4]">
                     Save driver details and optionally link them to a vehicle later.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsDriverModalOpen(false)}
-                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  className="p-2 text-[#B7BEC4] hover:text-white transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {driverError && (
-                <div className="mb-3 text-xs text-red-600 dark:text-red-400">{driverError}</div>
+                <div className="mb-3 text-xs text-red-400">{driverError}</div>
               )}
 
               <form onSubmit={handleCreateDriver} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Driver name
                   </label>
                   <input
@@ -1460,12 +1488,12 @@ export default function DashboardPage(props: PageProps) {
                     required
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="E.g. Ramesh"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Phone
                   </label>
                   <input
@@ -1473,31 +1501,31 @@ export default function DashboardPage(props: PageProps) {
                     required
                     value={driverPhone}
                     onChange={(e) => setDriverPhone(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="+91 98765 43210"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Blood group (optional)
                   </label>
                   <input
                     type="text"
                     value={driverBloodGroup}
                     onChange={(e) => setDriverBloodGroup(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm uppercase text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm uppercase text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="O+"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Notes (optional)
                   </label>
                   <textarea
                     value={driverNotes}
                     onChange={(e) => setDriverNotes(e.target.value)}
                     rows={2}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm text-zinc-900 dark:text-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="E.g. Night shift driver, speaks Kannada and Hindi"
                   />
                 </div>
@@ -1505,7 +1533,7 @@ export default function DashboardPage(props: PageProps) {
                 <button
                   type="submit"
                   disabled={driverSaving}
-                  className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50"
+                  className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#145A3A] text-white text-sm font-semibold hover:bg-[#1F7A5A] active:scale-[0.98] transition disabled:opacity-50"
                 >
                   {driverSaving ? (
                     <>
@@ -1525,23 +1553,23 @@ export default function DashboardPage(props: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#101518] to-black text-white pb-20">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
-        className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10 shadow-sm"
+        className="bg-[#1F2428] border-b border-[#2B3136] sticky top-0 z-10"
       >
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-red-600 p-1.5 rounded-lg">
+            <div className="bg-[#145A3A] p-1.5 rounded-full">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-zinc-900 dark:text-white">Dashboard</span>
+              <span className="font-bold text-white">Dashboard</span>
               {profile?.account_type === 'commercial' && (
-                <span className="text-[11px] uppercase tracking-[0.2em] text-red-500">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-[#9AC57A]">
                   B2B · Fleet mode
                 </span>
               )}
@@ -1551,19 +1579,19 @@ export default function DashboardPage(props: PageProps) {
             <button
               type="button"
               onClick={() => setProfileMenuOpen((open) => !open)}
-              className="w-9 h-9 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center hover:opacity-90 transition-colors"
+              className="h-8 px-2.5 rounded-lg bg-[#2B3136] border border-[#3A3F45] text-white text-[11px] font-bold tracking-wide flex items-center justify-center hover:bg-[#3A3F45] transition-colors"
             >
-              <User className="w-4 h-4" />
+              rexu
             </button>
             {profileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1 text-sm">
+              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#3A3F45] bg-[#1F2428] shadow-lg py-1 text-sm z-20">
                 <button
                   type="button"
                   onClick={() => {
                     setProfileMenuOpen(false);
                     router.push('/profile');
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white"
                 >
                   <User className="w-4 h-4" />
                   <span>Profile</span>
@@ -1577,7 +1605,7 @@ export default function DashboardPage(props: PageProps) {
                       el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white"
                 >
                   <QrCode className="w-4 h-4" />
                   <span>Your QR</span>
@@ -1589,7 +1617,7 @@ export default function DashboardPage(props: PageProps) {
                     await supabase.auth.signOut();
                     router.push('/login');
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-400 hover:bg-red-950/30"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
@@ -1606,44 +1634,44 @@ export default function DashboardPage(props: PageProps) {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="max-w-5xl mx-auto px-4 py-8 space-y-8"
       >
-        {/* Welcome Card (OTP verification temporarily hidden) */}
-        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="rounded-[32px] overflow-hidden">
-          <Card3D tilt={false} lift className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
+        {/* Welcome Card */}
+        <motion.section variants={sectionVariants} initial="hidden" animate="visible">
+          <div className="bg-[#101518]/90 rounded-[28px] p-8 border border-white/10">
+            <h1 className="text-2xl font-bold text-white mb-2">
               Hello, {profile?.full_name}!
             </h1>
-            <p className="text-zinc-500 dark:text-zinc-400">Manage your emergency contacts and vehicle QR code.</p>
-          </Card3D>
+            <p className="text-[#B7BEC4]">Manage your emergency contacts and vehicle QR code.</p>
+          </div>
         </motion.section>
 
         {/* Emergency Contacts overview (between welcome and profile) */}
         {contacts.length > 0 && (
-          <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-[#101518]/90 rounded-[28px] p-6 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-                <Phone className="w-4 h-4 text-red-600" /> Emergency Contacts
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Phone className="w-4 h-4 text-[#9AC57A]" /> Emergency Contacts
               </h2>
-              <span className="text-[11px] text-zinc-400 uppercase tracking-[0.18em]">
+              <span className="text-[11px] text-[#B7BEC4]/60 uppercase tracking-[0.18em]">
                 Saved ({contacts.length})
               </span>
             </div>
-            <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="rounded-xl border border-white/5 divide-y divide-white/5">
               {contacts.map((contact) => (
-                <div key={contact.id} className="px-3 py-3 flex items-center justify-between gap-3">
+                <div key={contact.id} className="px-3 py-3 flex items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[#0F3D2E]/30 border border-[#145A3A]/40 flex items-center justify-center text-[#9AC57A] text-sm font-bold">
                       {contact.name[0]}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                      <div className="text-sm font-medium text-white">
                         {contact.name}
                       </div>
-                      <div className="text-[11px] text-zinc-500 uppercase tracking-wider">
+                      <div className="text-[11px] text-[#B7BEC4]/60 uppercase tracking-wider">
                         {contact.relation}
                       </div>
                     </div>
                   </div>
-                  <div className="text-[11px] font-mono text-zinc-500">{contact.phone}</div>
+                  <div className="text-[11px] font-mono text-[#B7BEC4]">{contact.phone}</div>
                 </div>
               ))}
             </div>
@@ -1656,19 +1684,19 @@ export default function DashboardPage(props: PageProps) {
           variants={sectionVariants}
           initial="hidden"
           animate="visible"
-          className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6"
+          className="bg-[#101518]/90 rounded-[28px] p-8 border border-white/10 space-y-6"
         >
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-red-600" /> Emergency Profile
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <User className="w-5 h-5 text-[#9AC57A]" /> Emergency Profile
             </h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+            <span className="text-xs uppercase tracking-[0.2em] text-[#B7BEC4]/60">
               Basic details
             </span>
           </div>
 
           {emergencyError && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium border border-red-100 dark:border-red-800">
+            <div className="p-3 rounded-lg bg-red-950/30 text-red-400 text-xs font-medium border border-red-900/40">
               {emergencyError}
             </div>
           )}
@@ -1676,19 +1704,19 @@ export default function DashboardPage(props: PageProps) {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Name
                 </label>
                 <input
                   type="text"
                   value={profile?.full_name || ''}
                   disabled
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/40 text-sm text-zinc-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136]/60 text-sm text-[#B7BEC4]"
                   placeholder="Your full name"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Mobile Number
                 </label>
                 <input
@@ -1696,7 +1724,7 @@ export default function DashboardPage(props: PageProps) {
                   required
                   value={formGuardianPhone}
                   onChange={(e) => setFormGuardianPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                   placeholder="+91 98765 43210"
                 />
               </div>
@@ -1705,14 +1733,14 @@ export default function DashboardPage(props: PageProps) {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Blood Group
                   </label>
                   <select
                     required
                     value={formBloodGroup}
                     onChange={(e) => setFormBloodGroup(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm uppercase"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white uppercase focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                   >
                     <option value="" disabled>
                       Select
@@ -1728,7 +1756,7 @@ export default function DashboardPage(props: PageProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                     Age
                   </label>
                   <input
@@ -1737,19 +1765,19 @@ export default function DashboardPage(props: PageProps) {
                     max={120}
                     value={formAge}
                     onChange={(e) => setFormAge(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                     placeholder="32"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Language
                 </label>
                 <select
                   value={formLanguageNote}
                   onChange={(e) => setFormLanguageNote(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                 >
                   <option value="" disabled>
                     Select preferred language
@@ -1775,9 +1803,9 @@ export default function DashboardPage(props: PageProps) {
                   type="checkbox"
                   checked={formOrganDonor}
                   onChange={(e) => setFormOrganDonor(e.target.checked)}
-                  className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700"
+                  className="w-4 h-4 rounded border-[#3A3F45] bg-[#2B3136] accent-[#145A3A]"
                 />
-                <label htmlFor="organ-donor" className="text-xs text-zinc-500">
+                <label htmlFor="organ-donor" className="text-xs text-[#B7BEC4]">
                   Mark as organ donor
                 </label>
               </div>
@@ -1786,12 +1814,12 @@ export default function DashboardPage(props: PageProps) {
         </motion.section>
 
         {/* Emergency Medical Info */}
-        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+        <motion.section variants={sectionVariants} initial="hidden" animate="visible" className="bg-[#101518]/90 rounded-[28px] p-8 border border-white/10 space-y-6">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <HeartPulse className="w-5 h-5 text-red-600" /> Medical Information
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <HeartPulse className="w-5 h-5 text-[#9AC57A]" /> Medical Information
             </h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+            <span className="text-xs uppercase tracking-[0.2em] text-[#B7BEC4]/60">
               Critical medical details
             </span>
           </div>
@@ -1799,26 +1827,26 @@ export default function DashboardPage(props: PageProps) {
           <form onSubmit={handleSaveEmergencyProfile} className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Allergies (highlighted in red on scan page)
                 </label>
                 <textarea
                   value={formAllergies}
                   onChange={(e) => setFormAllergies(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                   placeholder="E.g. Cannot tolerate anesthesia, allergic to penicillin"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Medical Conditions
                 </label>
                 <textarea
                   value={formMedicalConditions}
                   onChange={(e) => setFormMedicalConditions(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                   placeholder="E.g. Diabetes, hypertension, epilepsy"
                 />
               </div>
@@ -1826,26 +1854,26 @@ export default function DashboardPage(props: PageProps) {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Medications
                 </label>
                 <textarea
                   value={formMedications}
                   onChange={(e) => setFormMedications(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                   placeholder="E.g. On blood thinners, insulin"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">
                   Critical Emergency Instructions (shown prominently)
                 </label>
                 <textarea
                   value={formEmergencyInstruction}
                   onChange={(e) => setFormEmergencyInstruction(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                   placeholder="E.g. Contact guardian before surgery. Do not administer general anesthesia without prior evaluation."
                 />
               </div>
@@ -1855,7 +1883,7 @@ export default function DashboardPage(props: PageProps) {
               <button
                 type="submit"
                 disabled={savingEmergencyProfile}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-[#145A3A] text-white text-sm font-semibold hover:bg-[#1F7A5A] active:scale-[0.98] transition disabled:opacity-50"
               >
                 {savingEmergencyProfile ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1870,34 +1898,34 @@ export default function DashboardPage(props: PageProps) {
         <motion.div variants={sectionVariants} initial="hidden" animate="visible" className="grid md:grid-cols-2 gap-8">
           {/* QR Status & Payment */}
           <section className="space-y-6" id="qr-section">
-            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-red-600" /> QR Status
+            <div className="bg-[#101518]/90 rounded-[28px] p-8 border border-white/10 relative overflow-hidden">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-[#9AC57A]" /> QR Status
               </h2>
 
               {!profile?.is_paid ? (
                 <div className="space-y-6">
-                  <div className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
+                  <div className="p-6 rounded-2xl bg-amber-900/20 border border-amber-900/30">
                     <div className="flex gap-4">
-                      <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
+                      <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0" />
                       <div>
-                        <h3 className="font-bold text-amber-900 dark:text-amber-400">QR Not Active</h3>
-                        <p className="text-sm text-amber-700 dark:text-amber-500 mt-1">
-                          Activate your kavach QR by paying a one-time fee of ₹299.
+                        <h3 className="font-bold text-amber-400">QR Not Active</h3>
+                        <p className="text-sm text-amber-500/80 mt-1">
+                          Activate your REXU QR by paying a one-time fee of ₹299.
                         </p>
                       </div>
                     </div>
                   </div>
                   <button 
                     onClick={handlePayment}
-                    className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-600/20"
+                    className="w-full bg-[#145A3A] text-white py-4 rounded-2xl font-bold hover:bg-[#1F7A5A] transition-all active:scale-95"
                   >
                     Pay ₹299 & Activate QR
                   </button>
                 </div>
               ) : (
                 <div className="text-center space-y-6">
-                  <div className="mx-auto w-fit p-4 bg-white rounded-3xl border-8 border-zinc-50 shadow-inner">
+                  <div className="mx-auto w-fit p-4 bg-white rounded-3xl border-8 border-white/10 shadow-inner">
                     <QRCodeSVG 
                       ref={qrRef}
                       value={`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/e/${qrToken}`} 
@@ -1905,13 +1933,13 @@ export default function DashboardPage(props: PageProps) {
                       level="H"
                     />
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-green-600 font-bold">
+                  <div className="flex items-center justify-center gap-2 text-[#9AC57A] font-bold">
                     <CheckCircle2 className="w-5 h-5" /> Active
                   </div>
-                  <p className="text-sm text-zinc-500">Token: <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">{qrToken}</span></p>
+                  <p className="text-sm text-[#B7BEC4]">Token: <span className="font-mono bg-[#2B3136] px-2 py-0.5 rounded text-white">{qrToken}</span></p>
                   <button 
                     onClick={handleDownloadQR}
-                    className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white py-3 rounded-xl font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-[#2B3136] text-white py-3 rounded-xl font-bold hover:bg-[#3A3F45] transition-all flex items-center justify-center gap-2"
                   >
                     <Download className="w-4 h-4" /> Download QR
                   </button>
@@ -1922,15 +1950,15 @@ export default function DashboardPage(props: PageProps) {
 
           {/* Emergency Contacts */}
           <section className="space-y-6">
-            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="bg-[#101518]/90 rounded-[28px] p-8 border border-white/10">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                  <Phone className="w-5 h-5 text-red-600" /> Contacts
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-[#9AC57A]" /> Contacts
                 </h2>
                 {!isAddingContact && contacts.length < 3 && profile?.is_paid && (
                   <button 
                     onClick={() => setIsAddingContact(true)}
-                    className="p-2 bg-red-50 dark:bg-red-950/30 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+                    className="p-2 bg-[#0F3D2E]/30 text-[#9AC57A] rounded-xl hover:bg-[#0F3D2E]/50 transition-colors"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -1939,30 +1967,30 @@ export default function DashboardPage(props: PageProps) {
 
               {/* Compact summary of Emergency Profile in this card */}
               {(guardianPhone || bloodGroup || age || languageNote || emergencyInstruction) && (
-                <div className="mb-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-4 space-y-2">
+                <div className="mb-6 rounded-xl border border-white/5 bg-[#2B3136]/50 p-4 space-y-2">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#B7BEC4]/60">
                       Emergency profile summary
                     </span>
                     <div className="flex items-center gap-2">
                       {bloodGroup && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#0F3D2E]/30 border border-[#145A3A]/40 text-[#9AC57A]">
                           {bloodGroup}
                         </span>
                       )}
                       <button
                         type="button"
                         onClick={scrollToEmergencyProfile}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-medium text-[#9AC57A] bg-[#0F3D2E]/20 hover:bg-[#0F3D2E]/40 transition-colors"
                       >
                         Edit
                       </button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                  <div className="grid grid-cols-1 gap-2 text-xs text-[#B7BEC4]">
                     {guardianPhone && (
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-[#B7BEC4]/60">
                           Guardian
                         </span>
                         <span className="font-mono">{guardianPhone}</span>
@@ -1970,7 +1998,7 @@ export default function DashboardPage(props: PageProps) {
                     )}
                     {age && (
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-[#B7BEC4]/60">
                           Age
                         </span>
                         <span>{age} yrs</span>
@@ -1978,7 +2006,7 @@ export default function DashboardPage(props: PageProps) {
                     )}
                     {languageNote && (
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-[#B7BEC4]/60">
                           Language
                         </span>
                         <span className="truncate max-w-[220px] text-right">{languageNote}</span>
@@ -1986,10 +2014,10 @@ export default function DashboardPage(props: PageProps) {
                     )}
                     {emergencyInstruction && (
                       <div className="mt-1">
-                        <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-[#B7BEC4]/60 mb-1">
                           Critical note
                         </p>
-                        <p className="text-xs text-zinc-700 dark:text-zinc-200 line-clamp-2">
+                        <p className="text-xs text-white/80 line-clamp-2">
                           {emergencyInstruction}
                         </p>
                       </div>
@@ -2000,15 +2028,15 @@ export default function DashboardPage(props: PageProps) {
 
               {!profile?.is_paid ? (
                 <div className="text-center py-12">
-                  <div className="bg-zinc-50 dark:bg-zinc-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Phone className="w-8 h-8 text-zinc-300" />
+                  <div className="bg-[#2B3136] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Phone className="w-8 h-8 text-[#B7BEC4]/40" />
                   </div>
-                  <p className="text-zinc-500 text-sm">Activate your QR to add contacts.</p>
+                  <p className="text-[#B7BEC4] text-sm">Activate your QR to add contacts.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {contacts.length > 0 && (
-                    <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <div className="rounded-xl border border-white/5 divide-y divide-white/5">
                       {contacts.map((contact) =>
                         editingContactId === contact.id ? (
                           <form
@@ -2017,13 +2045,13 @@ export default function DashboardPage(props: PageProps) {
                             className="px-4 py-3 space-y-3"
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#B7BEC4]/60">
                                 Edit contact
                               </span>
                               <button
                                 type="button"
                                 onClick={handleCancelEditContact}
-                                className="text-xs text-zinc-500 hover:text-red-600"
+                                className="text-xs text-[#B7BEC4] hover:text-red-400"
                               >
                                 Cancel
                               </button>
@@ -2031,7 +2059,7 @@ export default function DashboardPage(props: PageProps) {
                             <input
                               placeholder="Contact Name"
                               required
-                              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                              className="w-full px-4 py-2 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                               value={editingContact.name}
                               onChange={(e) =>
                                 setEditingContact((prev) => ({ ...prev, name: e.target.value }))
@@ -2040,7 +2068,7 @@ export default function DashboardPage(props: PageProps) {
                             <input
                               placeholder="Relation (e.g. Father)"
                               required
-                              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                              className="w-full px-4 py-2 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                               value={editingContact.relation}
                               onChange={(e) =>
                                 setEditingContact((prev) => ({ ...prev, relation: e.target.value }))
@@ -2050,7 +2078,7 @@ export default function DashboardPage(props: PageProps) {
                               placeholder="Phone Number"
                               required
                               type="tel"
-                              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                              className="w-full px-4 py-2 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                               value={editingContact.phone}
                               onChange={(e) =>
                                 setEditingContact((prev) => ({ ...prev, phone: e.target.value }))
@@ -2060,7 +2088,7 @@ export default function DashboardPage(props: PageProps) {
                               <button
                                 type="submit"
                                 disabled={savingContactEdit}
-                                className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50"
+                                className="flex-1 bg-[#145A3A] text-white py-2 rounded-lg font-bold hover:bg-[#1F7A5A] disabled:opacity-50 transition"
                               >
                                 {savingContactEdit ? (
                                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
@@ -2073,34 +2101,34 @@ export default function DashboardPage(props: PageProps) {
                         ) : (
                           <div
                             key={contact.id}
-                            className="px-4 py-3 flex items-center justify-between gap-4"
+                            className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 font-bold">
+                              <div className="w-10 h-10 rounded-full bg-[#0F3D2E]/30 border border-[#145A3A]/40 flex items-center justify-center text-[#9AC57A] font-bold">
                                 {contact.name[0]}
                               </div>
                               <div>
-                                <div className="font-bold text-zinc-900 dark:text-white">
+                                <div className="font-bold text-white">
                                   {contact.name}
                                 </div>
-                                <div className="text-xs text-zinc-500 uppercase tracking-wider">
+                                <div className="text-xs text-[#B7BEC4]/60 uppercase tracking-wider">
                                   {contact.relation}
                                 </div>
-                                <div className="text-xs text-zinc-500">{contact.phone}</div>
+                                <div className="text-xs text-[#B7BEC4]">{contact.phone}</div>
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <button
                                 type="button"
                                 onClick={() => handleStartEditContact(contact)}
-                                className="text-xs text-zinc-500 hover:text-red-600"
+                                className="text-xs text-[#B7BEC4] hover:text-white transition-colors"
                               >
                                 Edit
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteContact(contact.id)}
-                                className="text-xs text-red-600 hover:text-red-700"
+                                className="text-xs text-red-400 hover:text-red-300 transition-colors"
                               >
                                 Delete
                               </button>
@@ -2112,18 +2140,18 @@ export default function DashboardPage(props: PageProps) {
                   )}
 
                   {isAddingContact && (
-                    <form onSubmit={handleAddContact} className="p-6 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 space-y-4">
+                    <form onSubmit={handleAddContact} className="p-6 rounded-2xl border-2 border-dashed border-[#3A3F45] space-y-4">
                       <input
                         placeholder="Contact Name"
                         required
-                        className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                        className="w-full px-4 py-2 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                         value={newContact.name}
                         onChange={e => setNewContact({...newContact, name: e.target.value})}
                       />
                       <input
                         placeholder="Relation (e.g. Father)"
                         required
-                        className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                        className="w-full px-4 py-2 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                         value={newContact.relation}
                         onChange={e => setNewContact({...newContact, relation: e.target.value})}
                       />
@@ -2131,7 +2159,7 @@ export default function DashboardPage(props: PageProps) {
                         placeholder="Phone Number"
                         required
                         type="tel"
-                        className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black"
+                        className="w-full px-4 py-2 rounded-lg border border-[#3A3F45] bg-[#2B3136] text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
                         value={newContact.phone}
                         onChange={e => setNewContact({...newContact, phone: e.target.value})}
                       />
@@ -2139,14 +2167,14 @@ export default function DashboardPage(props: PageProps) {
                         <button 
                           type="submit" 
                           disabled={savingContact}
-                          className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50"
+                          className="flex-1 bg-[#145A3A] text-white py-2 rounded-lg font-bold hover:bg-[#1F7A5A] disabled:opacity-50 transition"
                         >
                           {savingContact ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Save Contact'}
                         </button>
                         <button 
                           type="button" 
                           onClick={() => setIsAddingContact(false)}
-                          className="px-4 py-2 text-zinc-500 font-medium"
+                          className="px-4 py-2 text-[#B7BEC4] font-medium hover:text-white transition-colors"
                         >
                           Cancel
                         </button>
@@ -2155,7 +2183,7 @@ export default function DashboardPage(props: PageProps) {
                   )}
 
                   {contacts.length === 0 && !isAddingContact && (
-                    <p className="text-center py-8 text-zinc-500 text-sm italic">No emergency contacts added yet.</p>
+                    <p className="text-center py-8 text-[#B7BEC4]/60 text-sm italic">No emergency contacts added yet.</p>
                   )}
                 </div>
               )}

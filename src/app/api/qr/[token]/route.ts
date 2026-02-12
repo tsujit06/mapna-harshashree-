@@ -27,7 +27,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'image/png',
-        'Content-Disposition': 'attachment; filename="kavach-qr.png"',
+        'Content-Disposition': 'attachment; filename="rexu-qr.png"',
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });

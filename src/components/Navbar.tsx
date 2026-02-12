@@ -30,7 +30,7 @@ export default function Navbar() {
                 <Shield className="w-6 h-6 text-white" />
               </motion.div>
               <span className="text-xl font-semibold tracking-tight text-white group-hover:text-[#E6ECEF] transition-colors duration-200">
-                kavach
+                REXU
               </span>
             </Link>
           </div>
@@ -60,7 +60,7 @@ export default function Navbar() {
                 href="/#pricing"
                 className="inline-block rounded-md bg-[#0A2A1F] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#145A3A] active:bg-[#1E6F4E] transition-colors"
               >
-                Get Your Kavach
+                Get Your REXU
               </Link>
             </motion.div>
           </div>
@@ -120,7 +120,7 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center bg-[#0A2A1F] text-white py-3.5 rounded-xl text-sm font-semibold hover:bg-[#145A3A] active:bg-[#1E6F4E] transition-colors"
                 >
-                  Get Your Kavach
+                  Get Your REXU
                 </Link>
               </motion.div>
             </div>

@@ -1,6 +1,6 @@
-# Kavach Backend (Express)
+# REXU Backend (Express)
 
-Production-ready Node.js/Express backend for **Kavach** (QRgency): FREE QR-based emergency contacts. No payment logic, no Razorpay — every registered user gets one lifetime QR after completing their emergency profile.
+Production-ready Node.js/Express backend for **REXU** (QRgency): FREE QR-based emergency contacts. No payment logic, no Razorpay — every registered user gets one lifetime QR after completing their emergency profile.
 
 ---
 
@@ -111,7 +111,7 @@ psql $DATABASE_URL -f database/schema.sql
 
 ```bash
 node -e "console.log(require('bcrypt').hashSync('your-admin-password', 10))"
-# Insert into admins (email, password_hash) values ('admin@kavach.app', '<hash>');
+# Insert into admins (email, password_hash) values ('admin@rexu.app', '<hash>');
 ```
 
 ### 5. Run
@@ -243,7 +243,7 @@ No auth. Returns emergency-safe data only (no email, password, internal IDs). If
 
 ```json
 // Request
-{ "email": "admin@kavach.app", "password": "your-admin-password" }
+{ "email": "admin@rexu.app", "password": "your-admin-password" }
 
 // Response 200
 { "success": true, "data": { "token": "eyJ...", "user": { "id": "...", "email": "...", "role": "admin" } } }
