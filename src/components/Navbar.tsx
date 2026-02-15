@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Menu, X } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,12 +23,17 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 group">
               <motion.div
-                className="bg-[#0A2A1F] p-1.5 rounded-xl"
                 whileHover={{ scale: 1.03, y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2, ...navEase }}
               >
-                <Shield className="w-6 h-6 text-white" />
+                <Image
+                  src="/rexu-logo.png"
+                  alt="REXU"
+                  width={36}
+                  height={36}
+                  className="rounded-xl"
+                />
               </motion.div>
               <span className="text-xl font-semibold tracking-tight text-white group-hover:text-[#E6ECEF] transition-colors duration-200">
                 REXU

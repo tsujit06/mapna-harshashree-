@@ -1928,7 +1928,7 @@ export default function DashboardPage(props: PageProps) {
                   <div className="mx-auto w-fit p-4 bg-white rounded-3xl border-8 border-white/10 shadow-inner">
                     <QRCodeSVG 
                       ref={qrRef}
-                      value={`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/e/${qrToken}`} 
+                      value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://kavach.world'}/e/${qrToken}`} 
                       size={180}
                       level="H"
                     />
