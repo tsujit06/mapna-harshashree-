@@ -9,8 +9,8 @@ export const metadata: Metadata = {
     "Instant emergency information via QR codes on vehicles and helmets.",
   icons: {
     icon: [
-      { url: "/icon.png", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "1024x1024" },
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
     ],
     apple: "/icon.png",
   },
