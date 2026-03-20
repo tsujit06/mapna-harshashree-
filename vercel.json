@@ -1,5 +1,4 @@
 {
-  "regions": ["bom1", "sin1", "iad1"],
   "framework": "nextjs",
   "headers": [
     {
