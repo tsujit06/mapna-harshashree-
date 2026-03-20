@@ -49,6 +49,14 @@ Production-quality MVP for instant emergency information via QR codes on vehicle
 npm install
 ```
 
+### 1b. Favicon (optional)
+
+The tab icon is built from `public/icon.png`. After changing the logo, regenerate `public/favicon.ico` and the small `src/app/icon.png` used by Next.js:
+
+```bash
+npm run generate-favicon
+```
+
 ### 2. Environment variables
 
 Create `.env.local`:

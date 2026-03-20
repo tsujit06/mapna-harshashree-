@@ -4,12 +4,14 @@ import ErrorReporter from "@/components/ErrorReporter";
 import ConditionalFooter from "@/components/ConditionalFooter";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://rexu.in"),
   title: "REXU – Emergency Info via QR",
   description:
     "Instant emergency information via QR codes on vehicles and helmets.",
   icons: {
+    // Query string busts CDN/browser caches that still hold the old Vercel default
     icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon.ico?v=rexu2", sizes: "any" },
       { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
     ],
     apple: "/icon.png",
