@@ -144,7 +144,17 @@ export default function DocumentsPage() {
           .order('name'),
       ]);
 
-      setDocuments((docs as FleetDocument[]) || []);
+      setDocuments(
+        (docs || []).map((d: Record<string, unknown>) => ({
+          ...d,
+          fleet_vehicles: Array.isArray(d.fleet_vehicles)
+            ? (d.fleet_vehicles[0] as { vehicle_number: string } | undefined) ?? null
+            : d.fleet_vehicles ?? null,
+          fleet_drivers: Array.isArray(d.fleet_drivers)
+            ? (d.fleet_drivers[0] as { name: string } | undefined) ?? null
+            : d.fleet_drivers ?? null,
+        })) as FleetDocument[]
+      );
       setVehicles(vehs || []);
       setDrivers(drvs || []);
     } catch (err) {
@@ -201,7 +211,16 @@ export default function DocumentsPage() {
         return;
       }
 
-      setDocuments((prev) => [inserted as FleetDocument, ...prev]);
+      const mapped: FleetDocument = {
+        ...inserted,
+        fleet_vehicles: Array.isArray(inserted.fleet_vehicles)
+          ? inserted.fleet_vehicles[0] ?? null
+          : inserted.fleet_vehicles ?? null,
+        fleet_drivers: Array.isArray(inserted.fleet_drivers)
+          ? inserted.fleet_drivers[0] ?? null
+          : inserted.fleet_drivers ?? null,
+      };
+      setDocuments((prev) => [mapped, ...prev]);
 
       const linkedTo = docVehicleId
         ? vehicles.find((v) => v.id === docVehicleId)?.vehicle_number

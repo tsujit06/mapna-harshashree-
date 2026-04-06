@@ -116,7 +116,17 @@ export default function CheckinsPage() {
           .order('name'),
       ]);
 
-      setCheckins((history as FleetCheckin[]) || []);
+      setCheckins(
+        (history || []).map((c: Record<string, unknown>) => ({
+          ...c,
+          fleet_vehicles: Array.isArray(c.fleet_vehicles)
+            ? (c.fleet_vehicles[0] as { vehicle_number: string } | undefined) ?? null
+            : c.fleet_vehicles ?? null,
+          fleet_drivers: Array.isArray(c.fleet_drivers)
+            ? (c.fleet_drivers[0] as { name: string } | undefined) ?? null
+            : c.fleet_drivers ?? null,
+        })) as FleetCheckin[]
+      );
       setVehicles(vehs || []);
       setDrivers((drvs as DriverOption[]) || []);
     } catch (err) {
@@ -191,7 +201,16 @@ export default function CheckinsPage() {
         return;
       }
 
-      setCheckins((prev) => [inserted as FleetCheckin, ...prev]);
+      const mapped: FleetCheckin = {
+        ...inserted,
+        fleet_vehicles: Array.isArray(inserted.fleet_vehicles)
+          ? inserted.fleet_vehicles[0] ?? null
+          : inserted.fleet_vehicles ?? null,
+        fleet_drivers: Array.isArray(inserted.fleet_drivers)
+          ? inserted.fleet_drivers[0] ?? null
+          : inserted.fleet_drivers ?? null,
+      };
+      setCheckins((prev) => [mapped, ...prev]);
 
       const vehicleName = vehicles.find((v) => v.id === selectedVehicle)?.vehicle_number || selectedVehicle;
       const driverName = selectedDriver ? drivers.find((d) => d.id === selectedDriver)?.name : null;

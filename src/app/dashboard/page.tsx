@@ -257,7 +257,17 @@ export default function DashboardPage(props: PageProps) {
           .lte('expiry_date', thirtyDaysFromNow.toISOString().split('T')[0])
           .order('expiry_date', { ascending: true });
 
-        setExpiringDocs((expiringData as typeof expiringDocs) || []);
+        setExpiringDocs(
+          (expiringData || []).map((d: Record<string, unknown>) => ({
+            id: d.id as string,
+            document_name: d.document_name as string,
+            document_type: d.document_type as string,
+            expiry_date: d.expiry_date as string,
+            fleet_vehicles: Array.isArray(d.fleet_vehicles)
+              ? (d.fleet_vehicles[0] as { vehicle_number: string } | undefined) ?? null
+              : (d.fleet_vehicles as { vehicle_number: string } | null),
+          }))
+        );
       }
 
       // Fetch or generate QR token (tolerant of duplicate rows)
