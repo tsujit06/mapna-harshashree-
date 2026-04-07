@@ -731,6 +731,16 @@ using (auth.uid() = owner_profile_id)
 with check (auth.uid() = owner_profile_id);
 
 -- =========================================================
+-- FLEET VEHICLES: check-in QR token
+-- =========================================================
+
+alter table public.fleet_vehicles
+  add column if not exists checkin_token text unique;
+
+create index if not exists idx_fleet_vehicles_checkin_token
+  on public.fleet_vehicles (checkin_token);
+
+-- =========================================================
 -- FLEET CHECKINS: trip purpose extension
 -- =========================================================
 

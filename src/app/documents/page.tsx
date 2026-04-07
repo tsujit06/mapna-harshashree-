@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { logFleetActivity } from '@/lib/fleetLogger';
 import {
@@ -77,7 +78,8 @@ function daysUntilExpiry(date: string): number {
   return Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export default function DocumentsPage() {
+function DocumentsPageContent() {
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<FleetDocument[]>([]);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
@@ -103,6 +105,12 @@ export default function DocumentsPage() {
   useEffect(() => {
     void fetchDocuments();
   }, []);
+
+  useEffect(() => {
+    const v = searchParams.get('vehicle');
+    if (!v || vehicles.length === 0) return;
+    if (vehicles.some((x) => x.id === v)) setDocVehicleId(v);
+  }, [searchParams, vehicles]);
 
   const fetchDocuments = async () => {
     try {
@@ -312,7 +320,10 @@ export default function DocumentsPage() {
   const expiredCount = documents.filter((d) => getExpiryStatus(d.expiry_date) === 'expired').length;
   const warningCount = documents.filter((d) => getExpiryStatus(d.expiry_date) === 'warning').length;
 
+  const vehicleFilterId = searchParams.get('vehicle');
+
   const filtered = documents
+    .filter((d) => !vehicleFilterId || d.vehicle_id === vehicleFilterId)
     .filter((d) => filterType === 'all' || d.document_type === filterType)
     .filter((d) => {
       if (!searchQuery.trim()) return true;
@@ -492,6 +503,20 @@ export default function DocumentsPage() {
               </select>
             </div>
           </div>
+
+          {vehicleFilterId && vehicles.find((x) => x.id === vehicleFilterId) && (
+            <div className="rounded-xl border border-[#145A3A]/40 bg-[#0F3D2E]/20 px-4 py-3 text-xs text-[#B7BEC4] flex flex-wrap items-center justify-between gap-2">
+              <span>
+                Filtered to vehicle{' '}
+                <span className="text-white font-semibold">
+                  {vehicles.find((x) => x.id === vehicleFilterId)?.vehicle_number}
+                </span>
+              </span>
+              <Link href="/documents" className="text-[#9AC57A] font-medium hover:underline">
+                Show all documents
+              </Link>
+            </div>
+          )}
 
           {/* List */}
           {filtered.length > 0 ? (
@@ -706,5 +731,19 @@ export default function DocumentsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DocumentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#9AC57A]" />
+        </div>
+      }
+    >
+      <DocumentsPageContent />
+    </Suspense>
   );
 }

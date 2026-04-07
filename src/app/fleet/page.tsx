@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { logFleetActivity } from '@/lib/fleetLogger';
 import {
@@ -23,6 +24,9 @@ import {
   Clock,
   Camera,
   Calendar,
+  FileText,
+  ClipboardCheck,
+  Upload,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -33,6 +37,16 @@ interface FleetVehicle {
   label: string | null;
   make_model: string | null;
   qr_token?: string | null;
+  checkin_token?: string | null;
+  created_at: string;
+}
+
+interface VehicleDocumentRow {
+  id: string;
+  document_name: string;
+  document_type: string;
+  expiry_date: string | null;
+  file_path: string;
   created_at: string;
 }
 
@@ -59,6 +73,16 @@ const INCIDENT_TYPES = [
   { value: 'unauthorized_use', label: 'Unauthorized Use' },
   { value: 'damage', label: 'Damage' },
   { value: 'missing_checkin', label: 'Missing Check-In' },
+  { value: 'other', label: 'Other' },
+];
+
+const FLEET_DOC_TYPES = [
+  { value: 'insurance', label: 'Insurance' },
+  { value: 'registration', label: 'Registration (RC)' },
+  { value: 'license', label: 'Driving License' },
+  { value: 'permit', label: 'Permit' },
+  { value: 'fitness', label: 'Fitness Certificate' },
+  { value: 'pollution', label: 'Pollution (PUC)' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -89,6 +113,7 @@ export default function FleetManagerPage() {
   const [expandedVehicle, setExpandedVehicle] = useState<string | null>(null);
   const [reminders, setReminders] = useState<Record<string, MaintenanceReminder[]>>({});
   const [incidents, setIncidents] = useState<Record<string, FleetIncident[]>>({});
+  const [vehicleDocs, setVehicleDocs] = useState<Record<string, VehicleDocumentRow[]>>({});
   const [vehicleDetailLoading, setVehicleDetailLoading] = useState<string | null>(null);
 
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
@@ -107,6 +132,17 @@ export default function FleetManagerPage() {
   const [incidentSaving, setIncidentSaving] = useState(false);
   const [incidentError, setIncidentError] = useState<string | null>(null);
   const incidentFileRef = useRef<HTMLInputElement>(null);
+
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [docVehicleId, setDocVehicleId] = useState<string | null>(null);
+  const [docType, setDocType] = useState('');
+  const [docName, setDocName] = useState('');
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docExpiryDate, setDocExpiryDate] = useState('');
+  const [docNotes, setDocNotes] = useState('');
+  const [docSaving, setDocSaving] = useState(false);
+  const [docError, setDocError] = useState<string | null>(null);
+  const docFileRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
 
@@ -145,7 +181,7 @@ export default function FleetManagerPage() {
       const { data, error } = await supabase
         .from('fleet_vehicles')
         .select(
-          'id, owner_profile_id, vehicle_number, label, make_model, qr_token, created_at'
+          'id, owner_profile_id, vehicle_number, label, make_model, qr_token, checkin_token, created_at'
         )
         .eq('owner_profile_id', user.id)
         .order('created_at', { ascending: false });
@@ -169,11 +205,17 @@ export default function FleetManagerPage() {
     }
     setExpandedVehicle(vehicleId);
 
-    if (reminders[vehicleId] && incidents[vehicleId]) return;
+    if (
+      reminders[vehicleId] &&
+      incidents[vehicleId] &&
+      vehicleDocs[vehicleId] !== undefined
+    ) {
+      return;
+    }
 
     setVehicleDetailLoading(vehicleId);
     try {
-      const [{ data: rems }, { data: incs }] = await Promise.all([
+      const [{ data: rems }, { data: incs }, { data: docs }] = await Promise.all([
         supabase
           .from('fleet_maintenance_reminders')
           .select('*')
@@ -184,9 +226,15 @@ export default function FleetManagerPage() {
           .select('*')
           .eq('vehicle_id', vehicleId)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('fleet_documents')
+          .select('id, document_name, document_type, expiry_date, file_path, created_at')
+          .eq('vehicle_id', vehicleId)
+          .order('created_at', { ascending: false }),
       ]);
       setReminders((prev) => ({ ...prev, [vehicleId]: (rems as MaintenanceReminder[]) || [] }));
       setIncidents((prev) => ({ ...prev, [vehicleId]: (incs as FleetIncident[]) || [] }));
+      setVehicleDocs((prev) => ({ ...prev, [vehicleId]: (docs as VehicleDocumentRow[]) || [] }));
     } catch (err) {
       console.error('FleetManager: fetch details error:', err);
     } finally {
@@ -306,6 +354,70 @@ export default function FleetManagerPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('FleetManager: failed to download vehicle QR:', err);
+    }
+  };
+
+  const handleGenerateCheckinQr = async (vehicleId: string, regenerate?: boolean) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch('/api/fleet/generate-checkin-qr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ vehicleId, regenerate: !!regenerate }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('FleetManager: generate check-in QR:', data.error);
+        return;
+      }
+      setFleetVehicles((prev) =>
+        prev.map((v) => (v.id === vehicleId ? { ...v, checkin_token: data.token } : v))
+      );
+      if (regenerate && typeof window !== 'undefined') {
+        window.alert(
+          'A new check-in QR was created. Old QR codes will no longer work — print or share the new one.'
+        );
+      }
+    } catch (err) {
+      console.error('FleetManager: generateCheckinQr:', err);
+    }
+  };
+
+  const handleDownloadCheckinQr = async (vehicleId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return;
+
+      const res = await fetch(
+        `/api/fleet/checkin-qr-image?vehicleId=${encodeURIComponent(vehicleId)}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) {
+        console.error('FleetManager: check-in QR download error', await res.text());
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rexu-vehicle-checkin-qr.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('FleetManager: download check-in QR:', err);
     }
   };
 
@@ -513,6 +625,126 @@ export default function FleetManagerPage() {
     }
   };
 
+  const openDocModal = (vehicleId: string) => {
+    setDocVehicleId(vehicleId);
+    setDocType('');
+    setDocName('');
+    setDocFile(null);
+    setDocExpiryDate('');
+    setDocNotes('');
+    setDocError(null);
+    setIsDocModalOpen(true);
+  };
+
+  const handleFleetDocUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docFile || !docType || !docName.trim() || !docVehicleId) return;
+    setDocSaving(true);
+    setDocError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const ext = docFile.name.split('.').pop() || 'pdf';
+      const filePath = `${user.id}/${Date.now()}_${docName.replace(/\s+/g, '_')}.${ext}`;
+      const { error: storageError } = await supabase.storage
+        .from('fleet-documents')
+        .upload(filePath, docFile);
+      if (storageError) {
+        setDocError(storageError.message);
+        return;
+      }
+
+      const { data: inserted, error: dbError } = await supabase
+        .from('fleet_documents')
+        .insert({
+          owner_profile_id: user.id,
+          document_type: docType,
+          document_name: docName.trim(),
+          file_path: filePath,
+          vehicle_id: docVehicleId,
+          driver_id: null,
+          expiry_date: docExpiryDate || null,
+          notes: docNotes.trim() || null,
+        })
+        .select('id, document_name, document_type, expiry_date, file_path, created_at')
+        .single();
+
+      if (dbError || !inserted) {
+        setDocError(dbError?.message || 'Save failed');
+        return;
+      }
+
+      setVehicleDocs((prev) => ({
+        ...prev,
+        [docVehicleId]: [inserted as VehicleDocumentRow, ...(prev[docVehicleId] || [])],
+      }));
+
+      const vehicleName = fleetVehicles.find((v) => v.id === docVehicleId)?.vehicle_number || '';
+      await logFleetActivity({
+        action: 'document_uploaded',
+        entityType: 'document',
+        entityId: inserted.id,
+        description: `Uploaded ${FLEET_DOC_TYPES.find((t) => t.value === docType)?.label || docType}: ${docName.trim()} for ${vehicleName}`,
+        metadata: { vehicle_id: docVehicleId, document_type: docType },
+      });
+
+      setIsDocModalOpen(false);
+      setDocType('');
+      setDocName('');
+      setDocFile(null);
+      setDocExpiryDate('');
+      setDocNotes('');
+      if (docFileRef.current) docFileRef.current.value = '';
+    } catch (err) {
+      console.error('Fleet doc upload:', err);
+      setDocError('Something went wrong.');
+    } finally {
+      setDocSaving(false);
+    }
+  };
+
+  const handleFleetDocDownload = async (filePath: string, name: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('fleet-documents')
+        .createSignedUrl(filePath, 300);
+      if (error || !data?.signedUrl) return;
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = name;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error('Doc download:', err);
+    }
+  };
+
+  const handleFleetDocDelete = async (vehicleId: string, doc: VehicleDocumentRow) => {
+    if (typeof window !== 'undefined' && !window.confirm(`Delete "${doc.document_name}"?`)) return;
+    try {
+      await supabase.storage.from('fleet-documents').remove([doc.file_path]);
+      const { error } = await supabase.from('fleet_documents').delete().eq('id', doc.id);
+      if (error) return;
+      setVehicleDocs((prev) => ({
+        ...prev,
+        [vehicleId]: (prev[vehicleId] || []).filter((d) => d.id !== doc.id),
+      }));
+      await logFleetActivity({
+        action: 'document_deleted',
+        entityType: 'document',
+        entityId: doc.id,
+        description: `Deleted ${doc.document_type}: ${doc.document_name}`,
+      });
+    } catch (err) {
+      console.error('Doc delete:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -658,6 +890,7 @@ export default function FleetManagerPage() {
                 const isExpanded = expandedVehicle === v.id;
                 const vReminders = reminders[v.id] || [];
                 const vIncidents = incidents[v.id] || [];
+                const vDocs = vehicleDocs[v.id] || [];
                 const pendingReminders = vReminders.filter((r) => r.status === 'pending');
                 const overdueCount = pendingReminders.filter((r) => {
                   const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -733,6 +966,116 @@ export default function FleetManagerPage() {
                             </div>
                           ) : (
                             <div className="px-4 pb-5 space-y-4">
+                              {/* Driver check-in QR */}
+                              <div className="bg-[#1F2428]/60 rounded-xl p-4 border border-white/5">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                  <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#B7BEC4] flex items-center gap-1.5">
+                                      <ClipboardCheck className="w-3.5 h-3.5" /> Driver check-in QR
+                                    </h3>
+                                    <p className="text-[10px] text-[#B7BEC4]/60 mt-1 max-w-md leading-relaxed">
+                                      Scan to check in or out and attach photos. No sign-in required for drivers.
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 shrink-0">
+                                    {!v.checkin_token ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleGenerateCheckinQr(v.id)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#145A3A] text-white text-[10px] font-semibold hover:bg-[#1F7A5A]"
+                                      >
+                                        <QrCode className="w-3 h-3" /> Generate check-in QR
+                                      </button>
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDownloadCheckinQr(v.id)}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#145A3A] text-white text-[10px] font-semibold hover:bg-[#1F7A5A]"
+                                        >
+                                          <Download className="w-3 h-3" /> Download QR
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleGenerateCheckinQr(v.id, true)}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#3A3F45] text-[10px] font-medium text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white"
+                                        >
+                                          New QR
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Documents for this vehicle */}
+                              <div className="bg-[#1F2428]/60 rounded-xl p-4 border border-white/5">
+                                <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#B7BEC4] flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5" /> Vehicle documents
+                                  </h3>
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => openDocModal(v.id)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#145A3A] text-white text-[10px] font-semibold hover:bg-[#1F7A5A]"
+                                    >
+                                      <Upload className="w-3 h-3" /> Upload
+                                    </button>
+                                    <Link
+                                      href={`/documents?vehicle=${v.id}`}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#3A3F45] text-[10px] font-medium text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white"
+                                    >
+                                      Open documents page
+                                    </Link>
+                                  </div>
+                                </div>
+                                {vDocs.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {vDocs.map((d) => (
+                                      <div
+                                        key={d.id}
+                                        className="flex items-center gap-3 py-2 px-3 rounded-lg bg-black/20 border border-white/5"
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-white truncate">{d.document_name}</p>
+                                          <p className="text-[10px] text-[#B7BEC4]/60">
+                                            {FLEET_DOC_TYPES.find((t) => t.value === d.document_type)?.label ||
+                                              d.document_type}
+                                            {d.expiry_date &&
+                                              ` · exp. ${new Date(d.expiry_date).toLocaleDateString('en-IN', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric',
+                                              })}`}
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleFleetDocDownload(d.file_path, d.document_name)}
+                                          className="p-1.5 rounded-lg text-[#B7BEC4] hover:bg-[#2B3136] hover:text-white"
+                                          title="Download"
+                                        >
+                                          <Download className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleFleetDocDelete(v.id, d)}
+                                          className="p-1.5 rounded-lg text-[#B7BEC4]/40 hover:text-red-400 hover:bg-red-950/30"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-[#B7BEC4]/40 text-center py-2">
+                                    No documents linked to this vehicle yet.
+                                  </p>
+                                )}
+                              </div>
+
                               {/* ── Maintenance Reminders ── */}
                               <div className="bg-[#1F2428]/60 rounded-xl p-4 border border-white/5">
                                 <div className="flex items-center justify-between mb-3">
@@ -967,6 +1310,95 @@ export default function FleetManagerPage() {
               </div>
               <button type="submit" disabled={incidentSaving} className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 active:scale-[0.98] transition disabled:opacity-50">
                 {incidentSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>) : (<><AlertTriangle className="w-4 h-4" /> Submit Report</>)}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Upload document for vehicle ── */}
+      {isDocModalOpen && docVehicleId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsDocModalOpen(false)} />
+          <div className="relative bg-[#1F2428] rounded-[28px] w-full max-w-md p-6 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-[#9AC57A]" /> Upload document
+                </h2>
+                <p className="text-xs text-[#B7BEC4]">
+                  For {fleetVehicles.find((x) => x.id === docVehicleId)?.vehicle_number || 'vehicle'}
+                </p>
+              </div>
+              <button type="button" onClick={() => setIsDocModalOpen(false)} className="p-2 text-[#B7BEC4] hover:text-white transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {docError && <div className="mb-3 text-xs text-red-400">{docError}</div>}
+
+            <form onSubmit={handleFleetDocUpload} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">Document type</label>
+                <select
+                  required
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
+                >
+                  <option value="" disabled>Select type</option>
+                  {FLEET_DOC_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">Document name</label>
+                <input
+                  type="text"
+                  required
+                  value={docName}
+                  onChange={(e) => setDocName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
+                  placeholder="E.g. Insurance policy 2025"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">File</label>
+                <input
+                  ref={docFileRef}
+                  type="file"
+                  required
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm text-[#B7BEC4] file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-[#3A3F45] file:bg-[#2B3136] file:text-white file:font-medium file:text-xs hover:file:bg-[#3A3F45] file:cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">Expiry date (optional)</label>
+                <input
+                  type="date"
+                  value={docExpiryDate}
+                  onChange={(e) => setDocExpiryDate(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition [color-scheme:dark]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#B7BEC4] mb-1.5">Notes (optional)</label>
+                <textarea
+                  value={docNotes}
+                  onChange={(e) => setDocNotes(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-sm text-white placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
+                  placeholder="Optional notes"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={docSaving}
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#145A3A] text-white text-sm font-semibold hover:bg-[#1F7A5A] active:scale-[0.98] transition disabled:opacity-50"
+              >
+                {docSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>) : (<><Upload className="w-4 h-4" /> Upload</>)}
               </button>
             </form>
           </div>

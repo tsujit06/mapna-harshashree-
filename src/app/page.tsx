@@ -558,10 +558,10 @@ export default function Home(props: HomePageProps) {
                 {/* CTA button */}
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
-                    href="/register?segment=commercial"
+                    href="/login"
                     className="block w-full bg-[#145A3A] hover:bg-[#1F7A5A] text-white py-4 rounded-2xl font-bold transition-all duration-300 text-center text-base"
                   >
-                    Request Demo
+                    Sign in
                   </Link>
                 </motion.div>
               </div>
