@@ -49,17 +49,11 @@ export async function GET(request: Request) {
     }
 
     const checkinUrl = `${QR_BASE_URL.replace(/\/$/, '')}/vehicle-checkin/${vehicle.checkin_token}`;
-    const qrSvgRaw = await QRCode.toString(checkinUrl, {
-      type: 'svg',
+    const qrDataUrl = await QRCode.toDataURL(checkinUrl, {
       margin: 1,
       width: 300,
       color: { dark: '#111827', light: '#FFFFFF' },
     });
-    const qrSvg = qrSvgRaw
-      .replace(/<\?xml[^>]*>/, '')
-      .replace(/<!DOCTYPE[^>]*>/, '')
-      .replace(/<svg[^>]*>/, '')
-      .replace(/<\/svg>/, '');
 
     // Check-in / Check-out sticker card matching the provided layout.
     const cardSvg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -74,7 +68,7 @@ export async function GET(request: Request) {
 
   <rect x="350" y="270" width="324" height="324" rx="24" fill="#A3D27A"/>
   <rect x="340" y="260" width="324" height="324" rx="24" fill="#F8FAFC" stroke="#111827" stroke-width="7"/>
-  <g transform="translate(352 272)">${qrSvg}</g>
+  <image x="352" y="272" width="300" height="300" href="${qrDataUrl}"/>
 
   <text x="512" y="652" text-anchor="middle" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800">Check In/Out</text>
   <text x="512" y="736" text-anchor="middle" fill="#374151" font-family="Arial, Helvetica, sans-serif" font-size="39" font-weight="500">Scan using phone camera, google lens</text>

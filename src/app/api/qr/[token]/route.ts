@@ -30,8 +30,7 @@ export async function GET(
       'https://kavach.world';
     const emergencyUrl = `${baseUrl.replace(/\/$/, '')}/e/${token}`;
 
-    const qrSvgRaw = await QRCode.toString(emergencyUrl, {
-      type: 'svg',
+    const qrDataUrl = await QRCode.toDataURL(emergencyUrl, {
       margin: 1,
       width: 330,
       color: {
@@ -39,11 +38,6 @@ export async function GET(
         light: '#FFFFFF',
       },
     });
-    const qrSvg = qrSvgRaw
-      .replace(/<\?xml[^>]*>/, '')
-      .replace(/<!DOCTYPE[^>]*>/, '')
-      .replace(/<svg[^>]*>/, '')
-      .replace(/<\/svg>/, '');
 
     const cardSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
@@ -68,7 +62,7 @@ export async function GET(
     Get yours now at www.rexu.in
   </text>
   <rect x="608" y="200" width="430" height="430" rx="26" fill="#FFFFFF" stroke="#A3D27A" stroke-width="14"/>
-  <g transform="translate(658 250)">${qrSvg}</g>
+  <image x="658" y="250" width="330" height="330" href="${qrDataUrl}"/>
 </svg>`;
 
     return new NextResponse(cardSvg, {
