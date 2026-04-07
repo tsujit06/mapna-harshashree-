@@ -347,7 +347,7 @@ export default function FleetManagerPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'rexu-vehicle-qr.png';
+      a.download = 'rexu-emergency-card.svg';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -411,7 +411,7 @@ export default function FleetManagerPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'rexu-vehicle-checkin-qr.png';
+      a.download = 'rexu-checkin-card.svg';
       document.body.appendChild(a);
       a.click();
       a.remove();
