@@ -16,10 +16,8 @@ type PageProps = {
 
 export default function RegisterPage(props: PageProps) {
   const searchParams = props.searchParams ? React.use(props.searchParams) : {};
-  const segment =
-    (searchParams?.segment as string | undefined)?.toLowerCase() === 'commercial'
-      ? 'commercial'
-      : 'personal';
+  // Temporarily disable B2C: force all signups to B2B (commercial).
+  const segment = 'commercial';
 
   if (props.params) React.use(props.params);
   const [email, setEmail] = useState('');
@@ -38,7 +36,7 @@ export default function RegisterPage(props: PageProps) {
 
       const redirectUrl =
         typeof window !== 'undefined'
-          ? `${window.location.origin}/dashboard${segment === 'commercial' ? '?segment=commercial' : ''}`
+          ? `${window.location.origin}/dashboard?segment=commercial`
           : undefined;
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -81,7 +79,7 @@ export default function RegisterPage(props: PageProps) {
         data: {
           full_name: fullName,
           mobile: normalizedMobile,
-          account_type: segment,
+          account_type: 'commercial',
         },
       },
     });
@@ -101,9 +99,7 @@ export default function RegisterPage(props: PageProps) {
     <AuthLayout
       title="Create Account"
       subtitle={
-        segment === 'commercial'
-          ? 'Set up REXU for your vehicles and drivers.'
-          : 'Join QRgency to protect yourself and your family.'
+        'Set up REXU for your vehicles and drivers.'
       }
     >
       <div className="space-y-6">

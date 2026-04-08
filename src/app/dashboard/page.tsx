@@ -181,13 +181,14 @@ export default function DashboardPage(props: PageProps) {
       return;
     }
 
+    // Temporarily disable B2C: treat all accounts as commercial.
     let accountType =
       profileData?.account_type ??
       (user.user_metadata?.account_type as string | undefined) ??
-      'personal';
+      'commercial';
 
-    // Google OAuth redirect may carry ?segment=commercial — persist it to the profile row
-    if (segmentFromUrl === 'commercial' && accountType !== 'commercial') {
+    // Always persist commercial to the profile row during B2B-only mode.
+    if (accountType !== 'commercial' || segmentFromUrl === 'commercial') {
       accountType = 'commercial';
       await supabase
         .from('profiles')
