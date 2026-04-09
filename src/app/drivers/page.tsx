@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { logFleetActivity } from '@/lib/fleetLogger';
 import {
   Shield,
   Plus,
@@ -66,13 +67,17 @@ export default function DriverManagerPage() {
         return;
       }
 
-      setProfileName(
-        (user.user_metadata?.full_name as string | undefined) || 'Fleet owner'
-      );
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, account_type')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      const accountType =
-        (user.user_metadata?.account_type as 'personal' | 'commercial' | undefined) ??
-        'personal';
+      const accountType = profileData?.account_type ?? user.user_metadata?.account_type ?? 'personal';
+
+      setProfileName(
+        profileData?.full_name ?? (user.user_metadata?.full_name as string | undefined) ?? 'Fleet owner'
+      );
 
       if (accountType !== 'commercial') {
         router.push('/dashboard');
@@ -147,6 +152,15 @@ export default function DriverManagerPage() {
       }
 
       setFleetDrivers((prev) => [data as FleetDriver, ...prev]);
+
+      await logFleetActivity({
+        action: 'driver_added',
+        entityType: 'driver',
+        entityId: data.id,
+        description: `Added driver ${driverName.trim()} (${driverPhone.trim()})`,
+        metadata: { name: driverName.trim(), phone: driverPhone.trim(), blood_group: driverBloodGroup.trim() || null },
+      });
+
       setDriverName('');
       setDriverPhone('');
       setDriverBloodGroup('');
@@ -197,7 +211,15 @@ export default function DriverManagerPage() {
         return;
       }
 
+      const deletedDriver = fleetDrivers.find((d) => d.id === driverId);
       setFleetDrivers((prev) => prev.filter((d) => d.id !== driverId));
+
+      await logFleetActivity({
+        action: 'driver_deleted',
+        entityType: 'driver',
+        entityId: driverId,
+        description: `Deleted driver ${deletedDriver?.name || 'unknown'}`,
+      });
     } catch (err) {
       console.error('DriverManager: delete driver error:', err);
     }
@@ -230,7 +252,7 @@ export default function DriverManagerPage() {
       <motion.header
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+        transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] as [number, number, number, number] }}
         className="bg-[#1F2428] border-b border-[#2B3136] sticky top-0 z-10"
       >
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">

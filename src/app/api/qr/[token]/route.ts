@@ -1,34 +1,75 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../backend/supabaseAdminClient';
+import QRCode from 'qrcode';
 
 export async function GET(
   request: Request,
-  context: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
-  const token = context.params.token;
+  const { token } = await params;
 
-  if (!token) {
-    return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+  if (!token || !/^[a-f0-9]{16,64}$/i.test(token)) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
   }
 
   try {
-    const { data, error } = await supabaseAdmin.storage
-      .from(process.env.SUPABASE_QR_BUCKET || 'QR')
-      .download(`${token}.png`);
-
-    if (error || !data) {
-      console.error('QR download error from storage:', error);
+    // Ensure token exists and is active before generating a sticker.
+    const { data: qrRow, error: qrErr } = await supabaseAdmin
+      .from('qr_codes')
+      .select('token, is_active')
+      .eq('token', token)
+      .maybeSingle();
+    if (qrErr || !qrRow || qrRow.is_active === false) {
+      console.error('QR token lookup error:', qrErr);
       return NextResponse.json({ error: 'QR not found' }, { status: 404 });
     }
 
-    const buffer = Buffer.from(await data.arrayBuffer());
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      'https://rexu.in';
+    const emergencyUrl = `${baseUrl.replace(/\/$/, '')}/e/${token}`;
 
-    return new NextResponse(buffer, {
+    const qrDataUrl = await QRCode.toDataURL(emergencyUrl, {
+      margin: 1,
+      width: 330,
+      color: {
+        dark: '#111827',
+        light: '#FFFFFF',
+      },
+    });
+
+    const cardSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <rect width="1200" height="760" fill="#9CA3AF"/>
+  <rect x="80" y="120" width="1040" height="520" rx="28" fill="#F8FAFC"/>
+
+  <text x="130" y="205" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="700">rexu</text>
+  <line x1="130" y1="225" x2="575" y2="225" stroke="#A3D27A" stroke-width="3"/>
+
+  <text x="130" y="272" fill="#334155" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600">Scan the code</text>
+  <text x="130" y="314" fill="#334155" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600">to contact</text>
+  <text x="130" y="370" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800">in case of emergency.</text>
+
+  <rect x="90" y="450" width="1020" height="86" fill="#A3D27A"/>
+  <text x="130" y="503" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">
+    Accidents? Wrong parking? Please scan the QR code.
+  </text>
+
+  <text x="130" y="604" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="500">
+    Get yours now at www.rexu.in
+  </text>
+
+  <rect x="608" y="200" width="430" height="430" rx="26" fill="#FFFFFF" stroke="#A3D27A" stroke-width="14"/>
+  <image x="658" y="250" width="330" height="330" href="${qrDataUrl}"/>
+</svg>`;
+
+    return new NextResponse(cardSvg, {
       status: 200,
       headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': 'attachment; filename="rexu-qr.png"',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="rexu-emergency-card.svg"',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (err) {
@@ -39,4 +80,3 @@ export async function GET(
     );
   }
 }
-
