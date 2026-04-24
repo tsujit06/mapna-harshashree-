@@ -1198,6 +1198,12 @@ create policy "Users can view own change logs"
 on public.change_logs for select
 using (auth.uid() = owner_profile_id);
 
+-- Allow audit triggers (running as the user) to insert their own change logs.
+drop policy if exists "Users can insert own change logs" on public.change_logs;
+create policy "Users can insert own change logs"
+on public.change_logs for insert
+with check (auth.uid() = owner_profile_id and auth.uid() = actor_profile_id);
+
 create or replace function public.jsonb_diff(a jsonb, b jsonb)
 returns jsonb
 language sql

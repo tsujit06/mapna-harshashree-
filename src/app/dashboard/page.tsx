@@ -45,6 +45,7 @@ interface Profile {
   mobile: string;
   is_paid: boolean;
   mobile_verified: boolean;
+  avatar_url?: string | null; // storage path in profile-photos bucket
   date_of_birth?: string | null;
   account_type?: string | null;
 }
@@ -90,6 +91,7 @@ export default function DashboardPage(props: PageProps) {
       ? 'commercial'
       : null;
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [fleetVehicles, setFleetVehicles] = useState<FleetVehicle[]>([]);
   const [fleetDrivers, setFleetDrivers] = useState<FleetDriver[]>([]);
@@ -171,7 +173,7 @@ export default function DashboardPage(props: PageProps) {
     // Fetch profile (including date_of_birth so we can derive age); use maybeSingle so new users without a row don't error
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, mobile, is_paid, mobile_verified, date_of_birth, account_type')
+      .select('id, full_name, mobile, is_paid, mobile_verified, avatar_url, date_of_birth, account_type')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -205,10 +207,20 @@ export default function DashboardPage(props: PageProps) {
             mobile: (user.user_metadata?.mobile as string) || '',
             is_paid: false,
             mobile_verified: false,
+            avatar_url: null,
             date_of_birth: null as string | null,
             account_type: accountType,
           };
     setProfile(effectiveProfile);
+
+    if (effectiveProfile.avatar_url) {
+      const { data: signed } = await supabase.storage
+        .from('profile-photos')
+        .createSignedUrl(effectiveProfile.avatar_url, 60 * 60);
+      setProfileAvatarUrl(signed?.signedUrl ?? null);
+    } else {
+      setProfileAvatarUrl(null);
+    }
 
     {
       const profileData = effectiveProfile;
@@ -1048,8 +1060,15 @@ export default function DashboardPage(props: PageProps) {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <Image src="/rexu-logo.png" alt="Rexu" width={56} height={56} className="rounded-full mb-2" />
-            <h2 className="font-bold text-sm text-white">Rexu</h2>
+            <div className="w-14 h-14 rounded-full mb-2 overflow-hidden border border-[#3A3F45] bg-[#2B3136] flex items-center justify-center">
+              {profileAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profileAvatarUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <Image src="/rexu-logo.png" alt="Rexu" width={56} height={56} className="rounded-full" />
+              )}
+            </div>
+            <h2 className="font-bold text-sm text-white">{profile?.full_name || 'Rexu'}</h2>
             <p className="text-[11px] text-[#B7BEC4]">Fleet Account</p>
             <button
               type="button"
