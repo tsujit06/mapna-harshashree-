@@ -5,7 +5,7 @@ const QR_BUCKET_NAME = process.env.SUPABASE_QR_BUCKET || 'QR';
 const QR_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://kavach.world';
+  'https://rexu.in';
 
 /**
  * Generate a PNG QR code for the given token and store it in the Supabase
@@ -21,7 +21,7 @@ export async function uploadQrPngToBucket(token: string) {
 
   // Generate PNG buffer
   const pngBuffer = await QRCode.toBuffer(url, {
-    type: 'image/png',
+    type: 'png',
     width: 512,
     margin: 2,
   });

@@ -10,7 +10,7 @@ interface Profile {
   id: string;
   full_name: string;
   mobile: string;
-  avatar_url?: string | null;
+  avatar_url?: string | null; // stored as storage path in profile-photos bucket
   date_of_birth?: string | null;
 }
 
@@ -27,6 +27,12 @@ export default function ProfilePage(props: PageProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [pwOld, setPwOld] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState<string>('');
@@ -66,7 +72,14 @@ export default function ProfilePage(props: PageProps) {
         } else {
           const typed = data as Profile;
           setProfile(typed);
-          setAvatarPreview(typed.avatar_url ?? null);
+          if (typed.avatar_url) {
+            const { data: signed } = await supabase.storage
+              .from('profile-photos')
+              .createSignedUrl(typed.avatar_url, 60 * 60);
+            setAvatarPreview(signed?.signedUrl ?? null);
+          } else {
+            setAvatarPreview(null);
+          }
           setDateOfBirth(typed.date_of_birth ?? '');
         }
       }
@@ -85,15 +98,15 @@ export default function ProfilePage(props: PageProps) {
     setError(null);
     setSuccess(null);
 
-    let avatarUrl = profile.avatar_url ?? null;
+    let avatarPath = profile.avatar_url ?? null;
 
-    // If a new avatar file is selected, upload it to the "photo" bucket
+    // If a new avatar file is selected, upload it to the "profile-photos" bucket (private)
     if (avatarFile) {
       const fileExt = avatarFile.name.split('.').pop() || 'jpg';
-      const filePath = `avatars/${profile.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${profile.id}/avatar-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('photo')
+        .from('profile-photos')
         .upload(filePath, avatarFile, {
           upsert: true,
         });
@@ -105,11 +118,7 @@ export default function ProfilePage(props: PageProps) {
         return;
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('photo').getPublicUrl(filePath);
-
-      avatarUrl = publicUrl;
+      avatarPath = filePath;
     }
 
     // Normalize mobile to always include +91 prefix
@@ -124,7 +133,7 @@ export default function ProfilePage(props: PageProps) {
       .update({
         full_name: profile.full_name,
         mobile: normalizedMobile,
-        avatar_url: avatarUrl,
+        avatar_url: avatarPath,
         // Store date of birth as ISO date (yyyy-mm-dd) or null
         date_of_birth: dateOfBirth || null,
       })
@@ -135,9 +144,12 @@ export default function ProfilePage(props: PageProps) {
       setError('Failed to update profile.');
     } else {
       setSuccess('Profile updated successfully.');
-      setProfile((p) => (p ? { ...p, avatar_url: avatarUrl } : p));
-      if (avatarUrl) {
-        setAvatarPreview(avatarUrl);
+      setProfile((p) => (p ? { ...p, avatar_url: avatarPath } : p));
+      if (avatarPath) {
+        const { data: signed } = await supabase.storage
+          .from('profile-photos')
+          .createSignedUrl(avatarPath, 60 * 60);
+        setAvatarPreview(signed?.signedUrl ?? null);
       }
     }
 
@@ -150,6 +162,59 @@ export default function ProfilePage(props: PageProps) {
     setAvatarFile(file);
     const url = URL.createObjectURL(file);
     setAvatarPreview(url);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(null);
+
+    if (pwNew.length < 6) {
+      setPwError('New password must be at least 6 characters.');
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      setPwError('New password and confirm password do not match.');
+      return;
+    }
+
+    setPwSaving(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const email = user?.email;
+      if (!email) {
+        setPwError('This account does not have an email/password login.');
+        return;
+      }
+
+      // Verify old password by re-authenticating.
+      const { error: reauthErr } = await supabase.auth.signInWithPassword({
+        email,
+        password: pwOld,
+      });
+      if (reauthErr) {
+        setPwError('Old password is incorrect.');
+        return;
+      }
+
+      const { error: updErr } = await supabase.auth.updateUser({ password: pwNew });
+      if (updErr) {
+        setPwError(updErr.message || 'Failed to update password.');
+        return;
+      }
+
+      setPwSuccess('Password updated successfully.');
+      setPwOld('');
+      setPwNew('');
+      setPwConfirm('');
+    } catch (e) {
+      console.error('Change password error:', e);
+      setPwError('Failed to update password.');
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   if (loading) {
@@ -288,6 +353,68 @@ export default function ProfilePage(props: PageProps) {
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save changes'}
             </button>
           </form>
+
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <h2 className="text-lg font-bold text-white">Reset password</h2>
+            <p className="text-sm text-[#B7BEC4] mt-1">
+              Change your password using your old password.
+            </p>
+
+            {pwError && (
+              <div className="mt-4 p-3 rounded-lg bg-red-950/30 text-red-400 text-sm font-medium border border-red-900/40">
+                {pwError}
+              </div>
+            )}
+            {pwSuccess && (
+              <div className="mt-4 p-3 rounded-lg bg-[#0F3D2E]/30 text-[#9AC57A] text-sm font-medium border border-[#145A3A]">
+                {pwSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#B7BEC4] mb-1.5">Old password</label>
+                <input
+                  type="password"
+                  required
+                  value={pwOld}
+                  onChange={(e) => setPwOld(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
+                  placeholder="Enter old password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#B7BEC4] mb-1.5">New password</label>
+                <input
+                  type="password"
+                  required
+                  value={pwNew}
+                  onChange={(e) => setPwNew(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
+                  placeholder="Min 6 characters"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#B7BEC4] mb-1.5">Confirm new password</label>
+                <input
+                  type="password"
+                  required
+                  value={pwConfirm}
+                  onChange={(e) => setPwConfirm(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm placeholder:text-[#B7BEC4]/40 focus:outline-none focus:ring-2 focus:ring-[#145A3A]/40 focus:border-[#145A3A] transition"
+                  placeholder="Repeat new password"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={pwSaving}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl border border-[#3A3F45] bg-[#2B3136] text-white text-sm font-semibold hover:bg-[#3A3F45] active:scale-[0.98] transition disabled:opacity-50"
+              >
+                {pwSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update password'}
+              </button>
+            </form>
+          </div>
         </section>
       </main>
     </div>
